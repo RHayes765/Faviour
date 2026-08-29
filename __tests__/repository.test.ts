@@ -1,0 +1,124 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { AsyncStorageRepository } from '../src/storage/asyncStorageRepository';
+import { CURRENT_SCHEMA_VERSION } from '../src/storage/migrations';
+import { SEED_REASON_TAGS } from '../src/storage/seedTags';
+import type { NewItemInput } from '../src/types';
+
+function makeRepo() {
+  return new AsyncStorageRepository();
+}
+
+function itemInput(profileId: string, overrides: Partial<NewItemInput> = {}): NewItemInput {
+  return {
+    profileId,
+    name: 'Spicy Chicken Tenders',
+    category: 'Chicken Tenders',
+    brand: "McDonald's",
+    preference: 'like',
+    ...overrides,
+  };
+}
+
+beforeEach(async () => {
+  await AsyncStorage.clear();
+});
+
+describe('AsyncStorageRepository', () => {
+  it('loads an empty, seeded database on first run and persists the schema version', async () => {
+    const db = await makeRepo().load();
+    expect(db.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+    expect(db.profiles).toEqual([]);
+    expect(db.items).toEqual([]);
+    expect(db.reasonTags).toEqual(SEED_REASON_TAGS);
+
+    const meta = await AsyncStorage.getItem('@faviour:meta');
+    expect(JSON.parse(meta!)).toEqual({ schemaVersion: CURRENT_SCHEMA_VERSION });
+  });
+
+  it('creates profiles and items with generated ids and timestamps', async () => {
+    const repo = makeRepo();
+    const profile = await repo.createProfile({ name: '  Ryley  ' });
+    expect(profile.name).toBe('Ryley');
+    expect(profile.id).toBeTruthy();
+    expect(Date.parse(profile.createdAt)).not.toBeNaN();
+
+    const item = await repo.createItem(itemInput(profile.id, { notes: undefined }));
+    expect(item.id).toBeTruthy();
+    expect(item.id).not.toBe(profile.id);
+    expect(item.notes).toBe('');
+    expect(item.barcode).toBeNull();
+    expect(item.photoFileName).toBeNull();
+    expect(item.createdAt).toBe(item.updatedAt);
+  });
+
+  it('persists across repository instances (fresh load sees prior writes)', async () => {
+    const repo = makeRepo();
+    const profile = await repo.createProfile({ name: 'Wife' });
+    await repo.createItem(itemInput(profile.id));
+
+    const db = await makeRepo().load();
+    expect(db.profiles).toHaveLength(1);
+    expect(db.items).toHaveLength(1);
+    expect(db.items[0].name).toBe('Spicy Chicken Tenders');
+  });
+
+  it('updates items partially, bumps updatedAt, and keeps other fields', async () => {
+    const repo = makeRepo();
+    const profile = await repo.createProfile({ name: 'Ryley' });
+    const item = await repo.createItem(itemInput(profile.id, { notes: 'pretty good' }));
+
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    const updated = await repo.updateItem(item.id, { preference: 'dislike' });
+    expect(updated.preference).toBe('dislike');
+    expect(updated.notes).toBe('pretty good');
+    expect(updated.name).toBe(item.name);
+    expect(Date.parse(updated.updatedAt)).toBeGreaterThan(Date.parse(item.updatedAt));
+  });
+
+  it('throws when updating a missing item', async () => {
+    const repo = makeRepo();
+    await repo.load();
+    await expect(repo.updateItem('nope', { name: 'x' })).rejects.toThrow('Item not found');
+  });
+
+  it('deletes items', async () => {
+    const repo = makeRepo();
+    const profile = await repo.createProfile({ name: 'Ryley' });
+    const item = await repo.createItem(itemInput(profile.id));
+    await repo.deleteItem(item.id);
+    const db = await makeRepo().load();
+    expect(db.items).toEqual([]);
+  });
+
+  it('cascades item deletion when a profile is deleted', async () => {
+    const repo = makeRepo();
+    const keep = await repo.createProfile({ name: 'Keep' });
+    const drop = await repo.createProfile({ name: 'Drop' });
+    await repo.createItem(itemInput(keep.id, { name: 'kept item' }));
+    await repo.createItem(itemInput(drop.id, { name: 'dropped item' }));
+
+    await repo.deleteProfile(drop.id);
+
+    const db = await makeRepo().load();
+    expect(db.profiles.map((p) => p.name)).toEqual(['Keep']);
+    expect(db.items.map((i) => i.name)).toEqual(['kept item']);
+  });
+
+  it('dedupes reason tags case-insensitively on items and in the tag list', async () => {
+    const repo = makeRepo();
+    const profile = await repo.createProfile({ name: 'Ryley' });
+    const item = await repo.createItem(
+      itemInput(profile.id, { reasonTags: ['Too salty', 'too salty', ' Great value '] }),
+    );
+    expect(item.reasonTags).toEqual(['Too salty', 'Great value']);
+
+    const tags = await repo.addReasonTag('TOO SALTY');
+    expect(tags.filter((t) => t.toLowerCase() === 'too salty')).toHaveLength(1);
+
+    const added = await repo.addReasonTag('Smells funny');
+    expect(added).toContain('Smells funny');
+    const db = await makeRepo().load();
+    expect(db.reasonTags).toContain('Smells funny');
+  });
+});
