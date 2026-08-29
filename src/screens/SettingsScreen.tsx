@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 
+import { AccountSection } from '../components/AccountSection';
 import { useData } from '../context/DataContext';
 import type { RootStackParamList } from '../navigation/types';
 import { validateBackup, type BackupSummary } from '../storage/backup';
@@ -134,6 +135,9 @@ export function SettingsScreen(_props: Props) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <Text style={styles.sectionLabel}>Account &amp; sync</Text>
+      <AccountSection />
+
       <Text style={styles.sectionLabel}>Your data</Text>
       <View style={styles.card}>
         <Text style={styles.dataLine}>

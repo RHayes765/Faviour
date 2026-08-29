@@ -4,6 +4,7 @@ import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { AuthProvider } from './src/context/AuthContext';
 import { DataProvider, useData } from './src/context/DataContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { colors } from './src/theme';
@@ -44,9 +45,11 @@ function Root() {
 export default function App() {
   return (
     <GestureHandlerRootView style={styles.flex}>
-      <DataProvider>
-        <Root />
-      </DataProvider>
+      <AuthProvider>
+        <DataProvider>
+          <Root />
+        </DataProvider>
+      </AuthProvider>
     </GestureHandlerRootView>
   );
 }
