@@ -4,6 +4,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { colors } from '../theme';
 import type { Item } from '../types';
+import { formatTriedDate } from '../utils/dates';
 import { VerdictBadge } from './VerdictBadge';
 
 interface Props {
@@ -18,7 +19,7 @@ export function ItemCard({ item, profileName, onEdit, onDelete }: Props) {
   return (
     <View style={[styles.card, { borderLeftColor: liked ? colors.like : colors.dislike }]}>
       <View style={styles.header}>
-        <Text style={styles.name}>{item.name}</Text>
+        <VerdictBadge preference={item.preference} size="large" />
         <View style={styles.actions}>
           <TouchableOpacity style={styles.actionButton} onPress={onEdit} accessibilityLabel="Edit item">
             <Ionicons name="pencil" size={20} color={colors.primary} />
@@ -26,29 +27,16 @@ export function ItemCard({ item, profileName, onEdit, onDelete }: Props) {
           <TouchableOpacity style={styles.actionButton} onPress={onDelete} accessibilityLabel="Delete item">
             <Ionicons name="trash-outline" size={20} color={colors.dislike} />
           </TouchableOpacity>
-          <View style={styles.badge}>
-            <VerdictBadge preference={item.preference} />
-          </View>
         </View>
       </View>
+      <Text style={styles.name}>{item.name}</Text>
       <Text style={styles.detail}>
-        <Text style={styles.label}>Profile: </Text>
-        {profileName}
+        {item.brand} · {item.category}
       </Text>
-      <Text style={styles.detail}>
-        <Text style={styles.label}>Category: </Text>
-        {item.category}
+      <Text style={styles.meta}>
+        {profileName} · Tried {formatTriedDate(item.updatedAt)}
       </Text>
-      <Text style={styles.detail}>
-        <Text style={styles.label}>Brand: </Text>
-        {item.brand}
-      </Text>
-      {item.notes ? (
-        <Text style={styles.detail}>
-          <Text style={styles.label}>Notes: </Text>
-          {item.notes}
-        </Text>
-      ) : null}
+      {item.notes ? <Text style={styles.notes}>{item.notes}</Text> : null}
     </View>
   );
 }
@@ -70,13 +58,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
-  },
-  name: {
-    fontSize: 18,
-    fontWeight: '600',
-    flex: 1,
-    color: colors.text,
+    marginBottom: 10,
   },
   actions: {
     flexDirection: 'row',
@@ -86,15 +68,25 @@ const styles = StyleSheet.create({
     padding: 6,
     marginLeft: 8,
   },
-  badge: {
-    marginLeft: 8,
+  name: {
+    fontSize: 19,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 2,
   },
   detail: {
     fontSize: 14,
-    marginBottom: 4,
     color: colors.textSecondary,
+    marginBottom: 2,
   },
-  label: {
-    fontWeight: '500',
+  meta: {
+    fontSize: 13,
+    color: colors.textMuted,
+  },
+  notes: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 8,
+    fontStyle: 'italic',
   },
 });

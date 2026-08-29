@@ -223,6 +223,16 @@ export function ItemsScreen({ route, navigation }: Props) {
             buttonLabel="Add an item"
             onButtonPress={() => navigation.navigate('AddItem', {})}
           />
+        ) : searchQuery.trim() && activeFiltersCount === 0 ? (
+          <EmptyState
+            icon="search-outline"
+            title={`Nothing for “${searchQuery.trim()}”`}
+            subtitle="Looks like it hasn't been tried yet"
+            buttonLabel="Add it"
+            onButtonPress={() =>
+              navigation.navigate('AddItem', { prefillName: searchQuery.trim() })
+            }
+          />
         ) : (
           <EmptyState
             icon="search-outline"
