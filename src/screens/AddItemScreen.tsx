@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import {
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -19,6 +21,7 @@ import { colors } from '../theme';
 import type { Preference } from '../types';
 import { normalizeBarcode } from '../utils/barcode';
 import { confirmDestructive, showAlert } from '../utils/confirm';
+import { deletePhoto, importPhoto, photoUri } from '../utils/photos';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddItem'>;
 
@@ -59,6 +62,12 @@ export function AddItemScreen({ route, navigation }: Props) {
   );
   const [newProfileName, setNewProfileName] = useState('');
   const [saving, setSaving] = useState(false);
+  // Newly picked photo (cache URI, imported on save) and removal of an existing one.
+  const [pickedPhotoUri, setPickedPhotoUri] = useState<string | null>(null);
+  const [photoRemoved, setPhotoRemoved] = useState(false);
+
+  const displayedPhotoUri =
+    pickedPhotoUri ?? (photoRemoved ? null : photoUri(itemToEdit?.photoFileName ?? null));
 
   useLayoutEffect(() => {
     navigation.setOptions({ title: itemToEdit ? 'Edit Item' : 'Add Item' });
@@ -101,19 +110,29 @@ export function AddItemScreen({ route, navigation }: Props) {
       return;
     }
 
-    const itemData = {
-      name,
-      category,
-      brand,
-      preference,
-      reasonTags: selectedTags,
-      notes,
-      barcode,
-      profileId: selectedProfileId,
-    };
-
     setSaving(true);
     try {
+      let photoFileName = itemToEdit?.photoFileName ?? null;
+      if (pickedPhotoUri) {
+        photoFileName = await importPhoto(pickedPhotoUri);
+        deletePhoto(itemToEdit?.photoFileName ?? null);
+      } else if (photoRemoved) {
+        deletePhoto(itemToEdit?.photoFileName ?? null);
+        photoFileName = null;
+      }
+
+      const itemData = {
+        name,
+        category,
+        brand,
+        preference,
+        reasonTags: selectedTags,
+        notes,
+        barcode,
+        photoFileName,
+        profileId: selectedProfileId,
+      };
+
       if (itemToEdit) {
         await updateItem(itemToEdit.id, itemData);
       } else {
@@ -122,6 +141,31 @@ export function AddItemScreen({ route, navigation }: Props) {
       navigation.goBack();
     } finally {
       setSaving(false);
+    }
+  };
+
+  const pickFromLibrary = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.5,
+    });
+    if (!result.canceled && result.assets?.[0]) {
+      setPickedPhotoUri(result.assets[0].uri);
+    }
+  };
+
+  const takePhoto = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      showAlert('Camera access needed', 'Allow camera access to take a product photo.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      quality: 0.5,
+    });
+    if (!result.canceled && result.assets?.[0]) {
+      setPickedPhotoUri(result.assets[0].uri);
     }
   };
 
@@ -280,6 +324,43 @@ export function AddItemScreen({ route, navigation }: Props) {
         </TouchableOpacity>
       )}
 
+      <Text style={styles.label}>Photo</Text>
+      {displayedPhotoUri ? (
+        <View style={styles.photoPreviewBox}>
+          <Image source={{ uri: displayedPhotoUri }} style={styles.photoPreview} />
+          <View style={styles.photoActions}>
+            <TouchableOpacity
+              style={styles.photoActionButton}
+              onPress={takePhoto}
+              accessibilityLabel="Retake photo"
+            >
+              <Ionicons name="camera-outline" size={20} color={colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.photoActionButton}
+              onPress={() => {
+                setPickedPhotoUri(null);
+                setPhotoRemoved(true);
+              }}
+              accessibilityLabel="Remove photo"
+            >
+              <Ionicons name="trash-outline" size={20} color={colors.dislike} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : (
+        <View style={styles.photoButtonRow}>
+          <TouchableOpacity style={styles.photoButton} onPress={takePhoto}>
+            <Ionicons name="camera-outline" size={20} color={colors.primary} />
+            <Text style={styles.photoButtonText}>Take photo</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.photoButton} onPress={pickFromLibrary}>
+            <Ionicons name="image-outline" size={20} color={colors.primary} />
+            <Text style={styles.photoButtonText}>Choose photo</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <Text style={styles.label}>Notes — the why</Text>
       <TextInput
         style={[styles.input, styles.notesInput]}
@@ -416,6 +497,48 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
     color: colors.primary,
+  },
+  photoButtonRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  photoButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: 8,
+    paddingVertical: 12,
+    backgroundColor: colors.card,
+  },
+  photoButtonText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: colors.primary,
+  },
+  photoPreviewBox: {
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  photoPreview: {
+    width: '100%',
+    height: 180,
+    resizeMode: 'cover',
+  },
+  photoActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+    padding: 8,
+  },
+  photoActionButton: {
+    padding: 6,
   },
   verdictButton: {
     flex: 1,

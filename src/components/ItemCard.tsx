@@ -1,9 +1,10 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { colors } from '../theme';
 import type { Item } from '../types';
 import { formatTriedDate } from '../utils/dates';
+import { photoUri } from '../utils/photos';
 import { VerdictBadge } from './VerdictBadge';
 
 interface Props {
@@ -14,6 +15,7 @@ interface Props {
 
 export function ItemCard({ item, profileName, onPress }: Props) {
   const liked = item.preference === 'like';
+  const photo = photoUri(item.photoFileName);
   return (
     <TouchableOpacity
       style={[styles.card, { borderLeftColor: liked ? colors.like : colors.dislike }]}
@@ -26,10 +28,15 @@ export function ItemCard({ item, profileName, onPress }: Props) {
           {profileName} · {formatTriedDate(item.updatedAt)}
         </Text>
       </View>
-      <Text style={styles.name}>{item.name}</Text>
-      <Text style={styles.detail}>
-        {item.brand} · {item.category}
-      </Text>
+      <View style={styles.body}>
+        <View style={styles.bodyText}>
+          <Text style={styles.name}>{item.name}</Text>
+          <Text style={styles.detail}>
+            {item.brand} · {item.category}
+          </Text>
+        </View>
+        {photo ? <Image source={{ uri: photo }} style={styles.thumbnail} /> : null}
+      </View>
       {item.reasonTags.length > 0 ? (
         <View style={styles.tagRow}>
           {item.reasonTags.slice(0, 3).map((tag) => (
@@ -73,6 +80,20 @@ const styles = StyleSheet.create({
   meta: {
     fontSize: 13,
     color: colors.textMuted,
+  },
+  body: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  bodyText: {
+    flex: 1,
+  },
+  thumbnail: {
+    width: 52,
+    height: 52,
+    borderRadius: 8,
+    backgroundColor: colors.chipBackground,
   },
   name: {
     fontSize: 19,

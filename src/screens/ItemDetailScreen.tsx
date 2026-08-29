@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useLayoutEffect } from 'react';
 import {
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,6 +17,7 @@ import type { RootStackParamList } from '../navigation/types';
 import { colors, profileColor } from '../theme';
 import { formatTriedDate } from '../utils/dates';
 import { confirmDestructive } from '../utils/confirm';
+import { photoUri } from '../utils/photos';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ItemDetail'>;
 
@@ -63,6 +65,10 @@ export function ItemDetailScreen({ route, navigation }: Props) {
       <Text style={styles.brandLine}>
         {item.brand} · {item.category}
       </Text>
+
+      {photoUri(item.photoFileName) ? (
+        <Image source={{ uri: photoUri(item.photoFileName)! }} style={styles.photo} />
+      ) : null}
 
       {profile ? (
         <View style={styles.profileRow}>
@@ -154,6 +160,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.textSecondary,
     marginTop: 4,
+  },
+  photo: {
+    width: '100%',
+    height: 220,
+    borderRadius: 10,
+    marginTop: 16,
+    backgroundColor: colors.chipBackground,
+    resizeMode: 'cover',
   },
   profileRow: {
     flexDirection: 'row',

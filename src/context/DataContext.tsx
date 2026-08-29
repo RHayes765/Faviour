@@ -11,6 +11,7 @@ import React, {
 import { AsyncStorageRepository } from '../storage/asyncStorageRepository';
 import type { FaviourRepository } from '../storage/repository';
 import type { Item, NewItemInput, Profile } from '../types';
+import { deletePhoto } from '../utils/photos';
 import { distinctValues } from '../utils/search';
 
 interface DataContextValue {
@@ -73,7 +74,14 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const removeProfile = useCallback(async (id: string) => {
     await repoRef.current.deleteProfile(id);
     setProfiles((prev) => prev.filter((p) => p.id !== id));
-    setItems((prev) => prev.filter((i) => i.profileId !== id));
+    setItems((prev) => {
+      for (const item of prev) {
+        if (item.profileId === id) {
+          deletePhoto(item.photoFileName);
+        }
+      }
+      return prev.filter((i) => i.profileId !== id);
+    });
   }, []);
 
   const addItem = useCallback(async (input: NewItemInput) => {
@@ -90,7 +98,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   const removeItem = useCallback(async (id: string) => {
     await repoRef.current.deleteItem(id);
-    setItems((prev) => prev.filter((i) => i.id !== id));
+    setItems((prev) => {
+      const removed = prev.find((i) => i.id === id);
+      if (removed) {
+        deletePhoto(removed.photoFileName);
+      }
+      return prev.filter((i) => i.id !== id);
+    });
   }, []);
 
   const addReasonTag = useCallback(async (tag: string) => {
