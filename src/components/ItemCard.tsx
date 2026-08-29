@@ -64,11 +64,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1,
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
     borderLeftWidth: 4,
   },
   header: {

@@ -84,7 +84,7 @@ export function ScanScreen({ route, navigation }: Props) {
       )}
 
       {permission?.granted && !scannedCode ? (
-        <View style={styles.reticle} pointerEvents="none">
+        <View style={styles.reticle}>
           <Text style={styles.reticleText}>Line up the barcode</Text>
         </View>
       ) : null}
@@ -211,6 +211,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
+    pointerEvents: 'none',
   },
   reticleText: {
     color: 'white',
