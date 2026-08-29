@@ -3,6 +3,7 @@
     "name": "Faviour",
     "slug": "faviour",
     "version": "1.1.1",
+    "scheme": "faviour",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -16,7 +17,8 @@
           "backgroundColor": "#FFFFFF"
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-web-browser"
     ],
     "ios": {
       "supportsTablet": true

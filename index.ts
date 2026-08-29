@@ -1,3 +1,5 @@
+// URL polyfill for supabase-js under Hermes (inert if the runtime has URL).
+import 'react-native-url-polyfill/auto';
 import { registerRootComponent } from 'expo';
 
 import App from './App';
