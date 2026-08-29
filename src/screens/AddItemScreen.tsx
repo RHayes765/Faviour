@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -16,6 +16,7 @@ import { useData } from '../context/DataContext';
 import type { RootStackParamList } from '../navigation/types';
 import { colors } from '../theme';
 import type { Preference } from '../types';
+import { normalizeBarcode } from '../utils/barcode';
 import { confirmDestructive, showAlert } from '../utils/confirm';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddItem'>;
@@ -44,12 +45,27 @@ export function AddItemScreen({ route, navigation }: Props) {
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(
     itemToEdit?.profileId ?? profiles[0]?.id ?? null,
   );
+  const [barcode, setBarcode] = useState<string | null>(
+    itemToEdit?.barcode ??
+      (route.params?.prefillBarcode
+        ? normalizeBarcode(route.params.prefillBarcode)
+        : null),
+  );
   const [newProfileName, setNewProfileName] = useState('');
   const [saving, setSaving] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({ title: itemToEdit ? 'Edit Item' : 'Add Item' });
   }, [navigation, itemToEdit]);
+
+  // Barcode handed back by ScanScreen in capture mode.
+  useEffect(() => {
+    const scanned = route.params?.scannedBarcode;
+    if (scanned) {
+      setBarcode(normalizeBarcode(scanned));
+      navigation.setParams({ scannedBarcode: undefined });
+    }
+  }, [route.params?.scannedBarcode, navigation]);
 
   const handleCreateProfile = async () => {
     const trimmed = newProfileName.trim();
@@ -85,6 +101,7 @@ export function AddItemScreen({ route, navigation }: Props) {
       brand,
       preference,
       notes,
+      barcode,
       profileId: selectedProfileId,
     };
 
@@ -212,6 +229,36 @@ export function AddItemScreen({ route, navigation }: Props) {
         </TouchableOpacity>
       </View>
 
+      <Text style={styles.label}>Barcode</Text>
+      {barcode ? (
+        <View style={styles.barcodeRow}>
+          <Ionicons name="barcode-outline" size={20} color={colors.textSecondary} />
+          <Text style={styles.barcodeText}>{barcode}</Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Scan', { mode: 'capture' })}
+            accessibilityLabel="Rescan barcode"
+            style={styles.barcodeAction}
+          >
+            <Ionicons name="camera-outline" size={20} color={colors.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setBarcode(null)}
+            accessibilityLabel="Remove barcode"
+            style={styles.barcodeAction}
+          >
+            <Ionicons name="close-circle" size={20} color={colors.textMuted} />
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <TouchableOpacity
+          style={styles.scanButton}
+          onPress={() => navigation.navigate('Scan', { mode: 'capture' })}
+        >
+          <Ionicons name="barcode-outline" size={20} color={colors.primary} />
+          <Text style={styles.scanButtonText}>Scan barcode</Text>
+        </TouchableOpacity>
+      )}
+
       <Text style={styles.label}>Notes — the why</Text>
       <TextInput
         style={[styles.input, styles.notesInput]}
@@ -313,6 +360,41 @@ const styles = StyleSheet.create({
   verdictRow: {
     flexDirection: 'row',
     gap: 12,
+  },
+  barcodeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: colors.card,
+    gap: 8,
+  },
+  barcodeText: {
+    flex: 1,
+    fontSize: 15,
+    color: colors.text,
+    fontVariant: ['tabular-nums'],
+  },
+  barcodeAction: {
+    padding: 2,
+  },
+  scanButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: 8,
+    paddingVertical: 12,
+    backgroundColor: colors.card,
+  },
+  scanButtonText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: colors.primary,
   },
   verdictButton: {
     flex: 1,

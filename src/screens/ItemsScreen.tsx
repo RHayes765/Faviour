@@ -113,6 +113,13 @@ export function ItemsScreen({ route, navigation }: Props) {
         </View>
         <TouchableOpacity
           style={styles.filterButton}
+          onPress={() => navigation.navigate('Scan', {})}
+          accessibilityLabel="Scan barcode"
+        >
+          <Ionicons name="barcode-outline" size={24} color={colors.textMuted} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.filterButton}
           onPress={() => setShowFilters(!showFilters)}
           accessibilityLabel="Toggle filters"
         >

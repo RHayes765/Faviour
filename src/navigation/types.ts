@@ -8,6 +8,13 @@ export type TabParamList = {
 export type RootStackParamList = {
   Main: NavigatorScreenParams<TabParamList> | undefined;
   AddItem:
-    | { itemId?: string; prefillName?: string; prefillBarcode?: string }
+    | {
+        itemId?: string;
+        prefillName?: string;
+        prefillBarcode?: string;
+        /** Set by ScanScreen when returning from capture mode. */
+        scannedBarcode?: string;
+      }
     | undefined;
+  Scan: { mode?: 'capture' } | undefined;
 };
