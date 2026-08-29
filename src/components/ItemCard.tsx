@@ -13,9 +13,11 @@ interface Props {
   onPress: () => void;
   /** Dense ladder position, computed by the parent via rankInfo(). */
   rankBadge?: { position: number; total: number } | null;
+  /** True for items from another account's shared profile (read-only). */
+  shared?: boolean;
 }
 
-export function ItemCard({ item, profileName, onPress, rankBadge }: Props) {
+export function ItemCard({ item, profileName, onPress, rankBadge, shared }: Props) {
   const liked = item.preference === 'like';
   const photo = photoUri(item.photoFileName);
   return (
@@ -30,6 +32,11 @@ export function ItemCard({ item, profileName, onPress, rankBadge }: Props) {
           {rankBadge ? (
             <View style={styles.rankPill}>
               <Text style={styles.rankPillText}>#{rankBadge.position}</Text>
+            </View>
+          ) : null}
+          {shared ? (
+            <View style={styles.sharedPill}>
+              <Text style={styles.sharedPillText}>Shared</Text>
             </View>
           ) : null}
         </View>
@@ -101,6 +108,17 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 12,
     fontWeight: '700',
+  },
+  sharedPill: {
+    backgroundColor: colors.chipBackground,
+    borderRadius: 12,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+  },
+  sharedPillText: {
+    color: colors.textMuted,
+    fontSize: 11,
+    fontWeight: '600',
   },
   body: {
     flexDirection: 'row',

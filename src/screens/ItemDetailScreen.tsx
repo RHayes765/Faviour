@@ -13,19 +13,29 @@ import {
 import { EmptyState } from '../components/EmptyState';
 import { VerdictBadge } from '../components/VerdictBadge';
 import { useData } from '../context/DataContext';
+import { useSync } from '../context/SyncContext';
 import type { RootStackParamList } from '../navigation/types';
 import { colors, profileColor } from '../theme';
 import { formatTriedDate } from '../utils/dates';
 import { confirmDestructive } from '../utils/confirm';
 import { photoUri } from '../utils/photos';
 import { rankInfo } from '../utils/ranking';
+// rankInfo is used for both own and shared cohorts; shared items never render
+// photos (photoFileName is nulled at pull time) or edit affordances.
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ItemDetail'>;
 
 export function ItemDetailScreen({ route, navigation }: Props) {
   const { items, profiles, removeItem } = useData();
-  const item = items.find((i) => i.id === route.params.itemId);
-  const profile = item ? profiles.find((p) => p.id === item.profileId) : undefined;
+  const { sharedItems, sharedProfiles, sharedLabelFor } = useSync();
+  const ownItem = items.find((i) => i.id === route.params.itemId);
+  const item = ownItem ?? sharedItems.find((i) => i.id === route.params.itemId);
+  const isShared = !ownItem && Boolean(item);
+  const profile = item
+    ? (profiles.find((p) => p.id === item.profileId) ??
+      sharedProfiles.find((p) => p.id === item.profileId))
+    : undefined;
+  const sharedLabel = item && isShared ? sharedLabelFor(item.profileId) : null;
 
   useLayoutEffect(() => {
     navigation.setOptions({ title: item?.name ?? 'Item' });
@@ -76,11 +86,28 @@ export function ItemDetailScreen({ route, navigation }: Props) {
           <View style={[styles.avatar, { backgroundColor: profileColor(profile.name) }]}>
             <Text style={styles.avatarText}>{profile.name.charAt(0).toUpperCase()}</Text>
           </View>
-          <Text style={styles.profileName}>{profile.name}&apos;s verdict</Text>
+          <Text style={styles.profileName}>
+            {profile.name}&apos;s verdict
+            {isShared ? ` · shared${sharedLabel ? ` by ${sharedLabel}` : ''}` : ''}
+          </Text>
         </View>
       ) : null}
 
-      {item.category.trim() ? (
+      {isShared && item.rankInCategory !== null ? (
+        <View style={[styles.rankRow, styles.rankRowStatic]}>
+          <Ionicons name="trophy-outline" size={18} color={colors.textMuted} />
+          <Text style={styles.rankRowText}>
+            {(() => {
+              const info = rankInfo(sharedItems, item);
+              return info
+                ? `Their #${info.position} of ${info.total} in ${item.category}`
+                : `Ranked in ${item.category}`;
+            })()}
+          </Text>
+        </View>
+      ) : null}
+
+      {!isShared && item.category.trim() ? (
         <TouchableOpacity
           style={styles.rankRow}
           onPress={() =>
@@ -141,17 +168,25 @@ export function ItemDetailScreen({ route, navigation }: Props) {
           : ''}
       </Text>
 
-      <TouchableOpacity
-        style={styles.editButton}
-        onPress={() => navigation.navigate('AddItem', { itemId: item.id })}
-      >
-        <Ionicons name="pencil" size={18} color="white" />
-        <Text style={styles.editButtonText}>Edit</Text>
-      </TouchableOpacity>
+      {!isShared ? (
+        <>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => navigation.navigate('AddItem', { itemId: item.id })}
+          >
+            <Ionicons name="pencil" size={18} color="white" />
+            <Text style={styles.editButtonText}>Edit</Text>
+          </TouchableOpacity>
 
-      <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-        <Text style={styles.deleteButtonText}>Delete Item</Text>
-      </TouchableOpacity>
+          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+            <Text style={styles.deleteButtonText}>Delete Item</Text>
+          </TouchableOpacity>
+        </>
+      ) : (
+        <Text style={styles.sharedFootnote}>
+          This is from a shared list — only its owner can edit it.
+        </Text>
+      )}
     </ScrollView>
   );
 }
@@ -230,6 +265,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.text,
     fontWeight: '500',
+  },
+  rankRowStatic: {
+    opacity: 0.85,
+  },
+  sharedFootnote: {
+    fontSize: 13,
+    color: colors.textFaint,
+    textAlign: 'center',
+    marginTop: 32,
+    fontStyle: 'italic',
   },
   sectionLabel: {
     fontSize: 13,

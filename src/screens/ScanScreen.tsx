@@ -14,6 +14,7 @@ import {
 
 import { VerdictBadge } from '../components/VerdictBadge';
 import { useData } from '../context/DataContext';
+import { useSync } from '../context/SyncContext';
 import type { RootStackParamList } from '../navigation/types';
 import { colors } from '../theme';
 import { barcodesMatch, normalizeBarcode } from '../utils/barcode';
@@ -26,6 +27,8 @@ const BARCODE_TYPES = ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128'] as const;
 export function ScanScreen({ route, navigation }: Props) {
   const capture = route.params?.mode === 'capture';
   const { items, profiles } = useData();
+  const { sharedItems, sharedProfiles, sharedLabelFor } = useSync();
+  const allItems = [...items, ...sharedItems];
   const [permission, requestPermission] = useCameraPermissions();
   const [scannedCode, setScannedCode] = useState<string | null>(null);
   const [manualOpen, setManualOpen] = useState(false);
@@ -55,10 +58,21 @@ export function ScanScreen({ route, navigation }: Props) {
   };
 
   const matches = scannedCode
-    ? items.filter((i) => barcodesMatch(i.barcode, scannedCode))
+    ? allItems.filter((i) => barcodesMatch(i.barcode, scannedCode))
     : [];
 
-  const profileName = (id: string) => profiles.find((p) => p.id === id)?.name ?? 'Unknown';
+  const profileName = (id: string) => {
+    const own = profiles.find((p) => p.id === id);
+    if (own) {
+      return own.name;
+    }
+    const sharedProfile = sharedProfiles.find((p) => p.id === id);
+    if (sharedProfile) {
+      const label = sharedLabelFor(id);
+      return label ? `${sharedProfile.name} · ${label}` : `${sharedProfile.name} (shared)`;
+    }
+    return 'Unknown';
+  };
 
   return (
     <View style={styles.container}>
@@ -115,7 +129,8 @@ export function ScanScreen({ route, navigation }: Props) {
                     <View style={styles.matchInfo}>
                       <Text style={styles.matchProfile}>{profileName(item.profileId)}</Text>
                       {(() => {
-                        const info = rankInfo(items, item);
+                        const shared = sharedItems.some((s) => s.id === item.id);
+                        const info = rankInfo(shared ? sharedItems : items, item);
                         return info ? (
                           <Text style={styles.matchNotes}>
                             Ranked #{info.position} of {info.total} in {item.category}

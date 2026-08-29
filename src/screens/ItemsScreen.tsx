@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { EmptyState } from '../components/EmptyState';
 import { ItemCard } from '../components/ItemCard';
 import { useData } from '../context/DataContext';
+import { useSync } from '../context/SyncContext';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
 import { colors } from '../theme';
 import type { Preference } from '../types';
@@ -33,6 +34,12 @@ const ALL = ALL_FILTER;
 
 export function ItemsScreen({ route, navigation }: Props) {
   const { profiles, items, categories, brands } = useData();
+  const { sharedItems, sharedProfiles, sharedLabelFor } = useSync();
+  const sharedItemIds = useMemo(
+    () => new Set(sharedItems.map((i) => i.id)),
+    [sharedItems],
+  );
+  const allItems = useMemo(() => [...items, ...sharedItems], [items, sharedItems]);
   const [selectedProfile, setSelectedProfile] = useState<string>(ALL);
   const [selectedCategory, setSelectedCategory] = useState<string>(ALL);
   const [selectedBrand, setSelectedBrand] = useState<string>(ALL);
@@ -61,7 +68,7 @@ export function ItemsScreen({ route, navigation }: Props) {
   const filteredItems = useMemo(
     () =>
       sortByRecency(
-        filterItems(items, {
+        filterItems(allItems, {
           query: searchQuery,
           profileId: selectedProfile,
           category: selectedCategory,
@@ -69,7 +76,7 @@ export function ItemsScreen({ route, navigation }: Props) {
           preference: selectedPreference,
         }),
       ),
-    [items, searchQuery, selectedProfile, selectedCategory, selectedBrand, selectedPreference],
+    [allItems, searchQuery, selectedProfile, selectedCategory, selectedBrand, selectedPreference],
   );
 
   const activeFiltersCount = [
@@ -87,8 +94,18 @@ export function ItemsScreen({ route, navigation }: Props) {
     setSearchQuery('');
   };
 
-  const profileName = (profileId: string) =>
-    profiles.find((p) => p.id === profileId)?.name ?? 'Unknown';
+  const profileName = (profileId: string) => {
+    const own = profiles.find((p) => p.id === profileId);
+    if (own) {
+      return own.name;
+    }
+    const sharedProfile = sharedProfiles.find((p) => p.id === profileId);
+    if (sharedProfile) {
+      const label = sharedLabelFor(profileId);
+      return label ? `${sharedProfile.name} · ${label}` : sharedProfile.name;
+    }
+    return 'Unknown';
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -172,6 +189,13 @@ export function ItemsScreen({ route, navigation }: Props) {
               <Picker.Item label="All Profiles" value={ALL} />
               {profiles.map((profile) => (
                 <Picker.Item key={profile.id} label={profile.name} value={profile.id} />
+              ))}
+              {sharedProfiles.map((profile) => (
+                <Picker.Item
+                  key={profile.id}
+                  label={`${profile.name} (shared)`}
+                  value={profile.id}
+                />
               ))}
             </Picker>
           </View>
@@ -267,14 +291,18 @@ export function ItemsScreen({ route, navigation }: Props) {
           keyExtractor={(item) => item.id}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.listContent}
-          renderItem={({ item }) => (
-            <ItemCard
-              item={item}
-              profileName={profileName(item.profileId)}
-              rankBadge={rankInfo(items, item)}
-              onPress={() => navigation.navigate('ItemDetail', { itemId: item.id })}
-            />
-          )}
+          renderItem={({ item }) => {
+            const shared = sharedItemIds.has(item.id);
+            return (
+              <ItemCard
+                item={item}
+                profileName={profileName(item.profileId)}
+                rankBadge={rankInfo(shared ? sharedItems : items, item)}
+                shared={shared}
+                onPress={() => navigation.navigate('ItemDetail', { itemId: item.id })}
+              />
+            );
+          }}
         />
       )}
 
