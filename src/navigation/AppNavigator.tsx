@@ -2,8 +2,10 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 
 import { AddItemScreen } from '../screens/AddItemScreen';
+import { CategoryRankScreen } from '../screens/CategoryRankScreen';
 import { ItemDetailScreen } from '../screens/ItemDetailScreen';
 import { ScanScreen } from '../screens/ScanScreen';
+import { SettingsScreen } from '../screens/SettingsScreen';
 import { TabNavigator } from './TabNavigator';
 import type { RootStackParamList } from './types';
 
@@ -31,6 +33,16 @@ export function AppNavigator() {
         name="ItemDetail"
         component={ItemDetailScreen}
         options={{ title: 'Item' }}
+      />
+      <Stack.Screen
+        name="CategoryRank"
+        component={CategoryRankScreen}
+        options={{ title: 'Rank' }}
+      />
+      <Stack.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ title: 'Settings' }}
       />
     </Stack.Navigator>
   );

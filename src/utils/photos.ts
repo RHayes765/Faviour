@@ -40,6 +40,29 @@ export async function importPhoto(sourceUri: string): Promise<string> {
   return fileName;
 }
 
+/**
+ * Import hygiene: backups don't carry photo files, so imported items may
+ * reference photos that don't exist on this device — null those out.
+ */
+export function pruneMissingPhotos<T extends { photoFileName: string | null }>(
+  items: T[],
+): T[] {
+  return items.map((item) => {
+    if (!item.photoFileName) {
+      return item;
+    }
+    if (Platform.OS === 'web') {
+      return { ...item, photoFileName: null };
+    }
+    try {
+      const file = new File(photosDir(), item.photoFileName);
+      return file.exists ? item : { ...item, photoFileName: null };
+    } catch {
+      return { ...item, photoFileName: null };
+    }
+  });
+}
+
 export function deletePhoto(fileName: string | null): void {
   if (!fileName || Platform.OS === 'web') {
     return;

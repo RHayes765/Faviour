@@ -2,6 +2,7 @@ import type { NavigatorScreenParams } from '@react-navigation/native';
 
 export type TabParamList = {
   Lookup: { profileFilterId?: string } | undefined;
+  Insights: undefined;
   Profiles: undefined;
 };
 
@@ -18,4 +19,6 @@ export type RootStackParamList = {
     | undefined;
   Scan: { mode?: 'capture' } | undefined;
   ItemDetail: { itemId: string };
+  CategoryRank: { category: string; profileId?: string };
+  Settings: undefined;
 };

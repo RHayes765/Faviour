@@ -72,6 +72,13 @@ export function ProfilesScreen({ navigation }: Props) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.title}>Profiles</Text>
+        <TouchableOpacity
+          style={styles.settingsButton}
+          onPress={() => navigation.navigate('Settings')}
+          accessibilityLabel="Settings"
+        >
+          <Ionicons name="settings-outline" size={24} color={colors.textMuted} />
+        </TouchableOpacity>
       </View>
 
       {profiles.length === 0 ? (
@@ -246,6 +253,9 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: colors.text,
+  },
+  settingsButton: {
+    padding: 8,
   },
   listContent: {
     paddingBottom: 96,
