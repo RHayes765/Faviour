@@ -1,7 +1,7 @@
 import type { DbSnapshot } from '../types';
 import { SEED_REASON_TAGS } from './seedTags';
 
-export const CURRENT_SCHEMA_VERSION = 1;
+export const CURRENT_SCHEMA_VERSION = 2;
 
 type RawDb = Partial<Omit<DbSnapshot, 'schemaVersion'>>;
 
@@ -14,6 +14,16 @@ const migrations: Record<number, (raw: RawDb) => RawDb> = {
       raw.reasonTags && raw.reasonTags.length > 0
         ? raw.reasonTags
         : [...SEED_REASON_TAGS],
+  }),
+  // v2: per-profile ranking within categories.
+  2: (raw) => ({
+    ...raw,
+    items: (raw.items ?? []).map((item) => ({
+      ...item,
+      // v1 items lack the field at runtime even though the compile-time type
+      // has it; ?? also preserves any already-present rank.
+      rankInCategory: item.rankInCategory ?? null,
+    })),
   }),
 };
 

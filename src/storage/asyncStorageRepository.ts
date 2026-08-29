@@ -124,6 +124,7 @@ export class AsyncStorageRepository implements FaviourRepository {
       notes: input.notes ?? '',
       barcode: input.barcode ?? null,
       photoFileName: input.photoFileName ?? null,
+      rankInCategory: null,
       createdAt: now,
       updatedAt: now,
     };
@@ -148,6 +149,17 @@ export class AsyncStorageRepository implements FaviourRepository {
     if (patch.notes !== undefined) changes.notes = patch.notes;
     if (patch.barcode !== undefined) changes.barcode = patch.barcode;
     if (patch.photoFileName !== undefined) changes.photoFileName = patch.photoFileName;
+    // Rank hygiene: a rank only means something within one profile+category
+    // ladder, so leaving either invalidates it. Case-only category edits
+    // ("wings" → "Wings") keep the rank.
+    const categoryChanged =
+      changes.category !== undefined &&
+      changes.category.toLowerCase() !== existing.category.toLowerCase();
+    const profileChanged =
+      changes.profileId !== undefined && changes.profileId !== existing.profileId;
+    if (categoryChanged || profileChanged) {
+      changes.rankInCategory = null;
+    }
     const updated: Item = { ...existing, ...changes, updatedAt: nowIso() };
     db.items = db.items.map((i) => (i.id === id ? updated : i));
     await AsyncStorage.setItem(KEYS.items, JSON.stringify(db.items));
@@ -165,6 +177,28 @@ export class AsyncStorageRepository implements FaviourRepository {
     db.reasonTags = dedupeTags([...db.reasonTags, tag]);
     await AsyncStorage.setItem(KEYS.tags, JSON.stringify(db.reasonTags));
     return [...db.reasonTags];
+  }
+
+  async setCategoryRanks(
+    profileId: string,
+    category: string,
+    orderedItemIds: string[],
+  ): Promise<Item[]> {
+    const db = await this.requireDb();
+    const categoryKey = category.trim().toLowerCase();
+    const rankById = new Map(orderedItemIds.map((id, index) => [id, index + 1]));
+    db.items = db.items.map((item) => {
+      const inLadder =
+        item.profileId === profileId &&
+        item.category.trim().toLowerCase() === categoryKey;
+      if (!inLadder) {
+        return item;
+      }
+      const rank = rankById.get(item.id) ?? null;
+      return item.rankInCategory === rank ? item : { ...item, rankInCategory: rank };
+    });
+    await AsyncStorage.setItem(KEYS.items, JSON.stringify(db.items));
+    return [...db.items];
   }
 
   async exportSnapshot(): Promise<DbSnapshot> {

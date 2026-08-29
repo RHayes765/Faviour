@@ -24,6 +24,18 @@ export interface FaviourRepository {
   deleteItem(id: string): Promise<void>;
   /** Adds a reason tag (deduped case-insensitively); returns the full list. */
   addReasonTag(tag: string): Promise<string[]>;
+  /**
+   * Reorders one profile+category ladder (category matched
+   * case-insensitively, consistent with filterItems). Listed items get rank
+   * 1..n; other items in that profile+category become unranked; nothing else
+   * is touched, and updatedAt is NOT bumped (ranking isn't a "tried it"
+   * event). Single persist; returns the full updated items array.
+   */
+  setCategoryRanks(
+    profileId: string,
+    category: string,
+    orderedItemIds: string[],
+  ): Promise<Item[]>;
   /** Defensive copy of the current snapshot, for backup export. */
   exportSnapshot(): Promise<DbSnapshot>;
   /**

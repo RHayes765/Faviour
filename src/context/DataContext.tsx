@@ -36,6 +36,12 @@ interface DataContextValue {
   addReasonTag: (tag: string) => Promise<string[]>;
   exportData: () => Promise<DbSnapshot>;
   importData: (incoming: DbSnapshot, mode: ImportMode) => Promise<void>;
+  /** Reorders one profile+category ladder; listed ids become rank 1..n. */
+  setCategoryRanks: (
+    profileId: string,
+    category: string,
+    orderedItemIds: string[],
+  ) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextValue | null>(null);
@@ -133,6 +139,18 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     setReasonTags(db.reasonTags);
   }, []);
 
+  const setCategoryRanks = useCallback(
+    async (profileId: string, category: string, orderedItemIds: string[]) => {
+      const updated = await repoRef.current.setCategoryRanks(
+        profileId,
+        category,
+        orderedItemIds,
+      );
+      setItems(updated);
+    },
+    [],
+  );
+
   const categories = useMemo(
     () => distinctValues(items.map((i) => i.category)),
     [items],
@@ -157,6 +175,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       addReasonTag,
       exportData,
       importData,
+      setCategoryRanks,
     }),
     [
       ready,
@@ -175,6 +194,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       addReasonTag,
       exportData,
       importData,
+      setCategoryRanks,
     ],
   );
 

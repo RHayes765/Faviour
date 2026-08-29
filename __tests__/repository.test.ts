@@ -117,6 +117,44 @@ describe('AsyncStorageRepository', () => {
     expect(db.items.map((i) => i.name)).toEqual(['kept item']);
   });
 
+  it('setCategoryRanks assigns 1..n, unranks unlisted, and is scoped + case-insensitive', async () => {
+    const repo = makeRepo();
+    const ryley = await repo.createProfile({ name: 'Ryley' });
+    const sam = await repo.createProfile({ name: 'Sam' });
+    const w1 = await repo.createItem(itemInput(ryley.id, { name: 'W1', category: 'Wings' }));
+    const w2 = await repo.createItem(itemInput(ryley.id, { name: 'W2', category: 'wings' }));
+    const w3 = await repo.createItem(itemInput(ryley.id, { name: 'W3', category: 'Wings' }));
+    const samWings = await repo.createItem(itemInput(sam.id, { name: 'SamW', category: 'Wings' }));
+    const dip = await repo.createItem(itemInput(ryley.id, { name: 'Dip', category: 'Dips' }));
+
+    // rank w2 (case-different category) first, then w1; w3 left out → unranked
+    const updated = await repo.setCategoryRanks(ryley.id, 'Wings', [w2.id, w1.id]);
+    const byId = new Map(updated.map((i) => [i.id, i]));
+    expect(byId.get(w2.id)!.rankInCategory).toBe(1);
+    expect(byId.get(w1.id)!.rankInCategory).toBe(2);
+    expect(byId.get(w3.id)!.rankInCategory).toBeNull();
+    expect(byId.get(samWings.id)!.rankInCategory).toBeNull(); // other profile untouched
+    expect(byId.get(dip.id)!.rankInCategory).toBeNull(); // other category untouched
+    expect(byId.get(w2.id)!.updatedAt).toBe(w2.updatedAt); // ranking is not a "tried it" event
+
+    // persists
+    const db = await makeRepo().load();
+    expect(db.items.find((i) => i.id === w2.id)!.rankInCategory).toBe(1);
+  });
+
+  it('clears rank when an item changes category or profile, keeps it on case-only edits', async () => {
+    const repo = makeRepo();
+    const ryley = await repo.createProfile({ name: 'Ryley' });
+    const wings = await repo.createItem(itemInput(ryley.id, { name: 'W', category: 'Wings' }));
+    await repo.setCategoryRanks(ryley.id, 'Wings', [wings.id]);
+
+    const caseOnly = await repo.updateItem(wings.id, { category: 'WINGS' });
+    expect(caseOnly.rankInCategory).toBe(1);
+
+    const moved = await repo.updateItem(wings.id, { category: 'Tenders' });
+    expect(moved.rankInCategory).toBeNull();
+  });
+
   it('exportSnapshot returns the current data and importSnapshot(replace) swaps everything', async () => {
     const repo = makeRepo();
     const oldProfile = await repo.createProfile({ name: 'OldPhone' });
@@ -166,6 +204,7 @@ describe('AsyncStorageRepository', () => {
           notes: '',
           barcode: null,
           photoFileName: null,
+          rankInCategory: null,
           createdAt: '2026-01-01T00:00:00.000Z',
           updatedAt: '2026-01-01T00:00:00.000Z',
         },

@@ -54,6 +54,7 @@ function parseItem(value: unknown): Item | null {
     notes: asString(value.notes),
     barcode: typeof value.barcode === 'string' ? value.barcode : null,
     photoFileName: typeof value.photoFileName === 'string' ? value.photoFileName : null,
+    rankInCategory: typeof value.rankInCategory === 'number' ? value.rankInCategory : null,
     createdAt: asString(value.createdAt, epoch),
     updatedAt: asString(value.updatedAt, epoch),
   };
