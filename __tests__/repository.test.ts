@@ -117,6 +117,67 @@ describe('AsyncStorageRepository', () => {
     expect(db.items.map((i) => i.name)).toEqual(['kept item']);
   });
 
+  it('exportSnapshot returns the current data and importSnapshot(replace) swaps everything', async () => {
+    const repo = makeRepo();
+    const oldProfile = await repo.createProfile({ name: 'OldPhone' });
+    await repo.createItem(itemInput(oldProfile.id, { name: 'old item' }));
+
+    const exported = await repo.exportSnapshot();
+    expect(exported.profiles).toHaveLength(1);
+    expect(exported.items).toHaveLength(1);
+
+    const incoming = {
+      ...exported,
+      profiles: [{ id: 'np', name: 'NewPhone', createdAt: '2026-01-01T00:00:00.000Z' }],
+      items: [],
+    };
+    const replaced = await repo.importSnapshot(incoming, 'replace');
+    expect(replaced.profiles.map((p) => p.name)).toEqual(['NewPhone']);
+    expect(replaced.items).toEqual([]);
+
+    // persisted: a fresh instance sees the replacement
+    const db = await makeRepo().load();
+    expect(db.profiles.map((p) => p.name)).toEqual(['NewPhone']);
+
+    // and the pre-import backup preserves what was there before
+    const backupRaw = await AsyncStorage.getItem('@faviour:pre-import-backup');
+    const backup = JSON.parse(backupRaw!);
+    expect(backup.profiles.map((p: { name: string }) => p.name)).toEqual(['OldPhone']);
+    expect(backup.items).toHaveLength(1);
+  });
+
+  it('importSnapshot(merge) unions with existing data', async () => {
+    const repo = makeRepo();
+    const local = await repo.createProfile({ name: 'Ryley' });
+    await repo.createItem(itemInput(local.id, { name: 'local item' }));
+
+    const incoming = {
+      schemaVersion: 1,
+      profiles: [{ id: 'wife-p', name: 'Sam', createdAt: '2026-01-01T00:00:00.000Z' }],
+      items: [
+        {
+          id: 'wife-i',
+          profileId: 'wife-p',
+          name: 'her item',
+          category: 'Soda',
+          brand: 'BigFizz',
+          preference: 'like' as const,
+          reasonTags: [],
+          notes: '',
+          barcode: null,
+          photoFileName: null,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      reasonTags: ['Her tag'],
+    };
+    const merged = await repo.importSnapshot(incoming, 'merge');
+    expect(merged.profiles.map((p) => p.name).sort()).toEqual(['Ryley', 'Sam']);
+    expect(merged.items.map((i) => i.name).sort()).toEqual(['her item', 'local item']);
+    expect(merged.reasonTags).toContain('Her tag');
+  });
+
   it('dedupes reason tags case-insensitively on items and in the tag list', async () => {
     const repo = makeRepo();
     const profile = await repo.createProfile({ name: 'Ryley' });

@@ -7,9 +7,11 @@ import type {
   NewProfileInput,
   Profile,
 } from '../types';
+import { dedupeTags } from '../utils/tags';
 import { newId } from './ids';
+import { mergeSnapshots } from './merge';
 import { CURRENT_SCHEMA_VERSION, runMigrations } from './migrations';
-import type { FaviourRepository } from './repository';
+import type { FaviourRepository, ImportMode } from './repository';
 
 const KEYS = {
   meta: '@faviour:meta',
@@ -17,6 +19,8 @@ const KEYS = {
   items: '@faviour:items',
   tags: '@faviour:tags',
 } as const;
+
+export const PRE_IMPORT_BACKUP_KEY = '@faviour:pre-import-backup';
 
 function parseJson<T>(raw: string | null | undefined, key: string): T | undefined {
   if (raw == null) {
@@ -35,21 +39,6 @@ function parseJson<T>(raw: string | null | undefined, key: string): T | undefine
 
 function nowIso(): string {
   return new Date().toISOString();
-}
-
-/** Dedupes case-insensitively, keeping the first spelling seen. */
-function dedupeTags(tags: string[]): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const tag of tags) {
-    const trimmed = tag.trim();
-    const key = trimmed.toLowerCase();
-    if (trimmed && !seen.has(key)) {
-      seen.add(key);
-      out.push(trimmed);
-    }
-  }
-  return out;
 }
 
 export class AsyncStorageRepository implements FaviourRepository {
@@ -176,6 +165,25 @@ export class AsyncStorageRepository implements FaviourRepository {
     db.reasonTags = dedupeTags([...db.reasonTags, tag]);
     await AsyncStorage.setItem(KEYS.tags, JSON.stringify(db.reasonTags));
     return [...db.reasonTags];
+  }
+
+  async exportSnapshot(): Promise<DbSnapshot> {
+    return this.load();
+  }
+
+  async importSnapshot(incoming: DbSnapshot, mode: ImportMode): Promise<DbSnapshot> {
+    const db = await this.requireDb();
+    try {
+      await AsyncStorage.setItem(PRE_IMPORT_BACKUP_KEY, JSON.stringify(db));
+    } catch (e) {
+      console.warn('Failed to write pre-import backup', e);
+    }
+    this.db =
+      mode === 'replace'
+        ? { ...incoming, schemaVersion: CURRENT_SCHEMA_VERSION }
+        : mergeSnapshots(db, incoming);
+    await this.persistAll();
+    return this.snapshot();
   }
 
   private async requireDb(): Promise<DbSnapshot> {

@@ -9,8 +9,8 @@ import React, {
 } from 'react';
 
 import { AsyncStorageRepository } from '../storage/asyncStorageRepository';
-import type { FaviourRepository } from '../storage/repository';
-import type { Item, NewItemInput, Profile } from '../types';
+import type { FaviourRepository, ImportMode } from '../storage/repository';
+import type { DbSnapshot, Item, NewItemInput, Profile } from '../types';
 import { deletePhoto } from '../utils/photos';
 import { distinctValues } from '../utils/search';
 
@@ -34,6 +34,8 @@ interface DataContextValue {
   removeItem: (id: string) => Promise<void>;
   /** Persists a tag and returns the canonical (deduped) tag list. */
   addReasonTag: (tag: string) => Promise<string[]>;
+  exportData: () => Promise<DbSnapshot>;
+  importData: (incoming: DbSnapshot, mode: ImportMode) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextValue | null>(null);
@@ -122,6 +124,15 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     return tags;
   }, []);
 
+  const exportData = useCallback(async () => repoRef.current.exportSnapshot(), []);
+
+  const importData = useCallback(async (incoming: DbSnapshot, mode: ImportMode) => {
+    const db = await repoRef.current.importSnapshot(incoming, mode);
+    setProfiles(db.profiles);
+    setItems(db.items);
+    setReasonTags(db.reasonTags);
+  }, []);
+
   const categories = useMemo(
     () => distinctValues(items.map((i) => i.category)),
     [items],
@@ -144,6 +155,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       updateItem,
       removeItem,
       addReasonTag,
+      exportData,
+      importData,
     }),
     [
       ready,
@@ -160,6 +173,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       updateItem,
       removeItem,
       addReasonTag,
+      exportData,
+      importData,
     ],
   );
 

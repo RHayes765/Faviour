@@ -6,6 +6,8 @@ import type {
   Profile,
 } from '../types';
 
+export type ImportMode = 'replace' | 'merge';
+
 /**
  * The persistence seam. UI code (via DataContext) only ever talks to this
  * interface, so AsyncStorage can later be swapped for SQLite or a backend
@@ -22,4 +24,12 @@ export interface FaviourRepository {
   deleteItem(id: string): Promise<void>;
   /** Adds a reason tag (deduped case-insensitively); returns the full list. */
   addReasonTag(tag: string): Promise<string[]>;
+  /** Defensive copy of the current snapshot, for backup export. */
+  exportSnapshot(): Promise<DbSnapshot>;
+  /**
+   * Replaces or merges with an already-validated, already-migrated snapshot.
+   * Writes a best-effort copy of the pre-import database to a backup key
+   * first, persists once, and returns the new full snapshot.
+   */
+  importSnapshot(incoming: DbSnapshot, mode: ImportMode): Promise<DbSnapshot>;
 }
