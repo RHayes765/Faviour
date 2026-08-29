@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 
+import { lookupBarcode, type ProductInfo } from '../api/openFoodFacts';
 import { ProfileChips } from '../components/ProfileChips';
 import { SuggestionInput } from '../components/SuggestionInput';
 import { TagPicker } from '../components/TagPicker';
@@ -81,6 +82,39 @@ export function AddItemScreen({ route, navigation }: Props) {
       navigation.setParams({ scannedBarcode: undefined });
     }
   }, [route.params?.scannedBarcode, navigation]);
+
+  // Best-effort Open Food Facts lookup for new items with a barcode; offers a
+  // one-tap prefill and never blocks the flow.
+  const [suggestion, setSuggestion] = useState<ProductInfo | null>(null);
+  useEffect(() => {
+    if (!barcode || itemToEdit) {
+      setSuggestion(null);
+      return;
+    }
+    let cancelled = false;
+    void lookupBarcode(barcode).then((info) => {
+      if (!cancelled) {
+        setSuggestion(info);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [barcode]);
+
+  const applySuggestion = () => {
+    if (!suggestion) {
+      return;
+    }
+    if (suggestion.name && !name.trim()) {
+      setName(suggestion.name);
+    }
+    if (suggestion.brand && !brand.trim()) {
+      setBrand(suggestion.brand);
+    }
+    setSuggestion(null);
+  };
 
   const handleCreateProfile = async () => {
     const trimmed = newProfileName.trim();
@@ -324,6 +358,24 @@ export function AddItemScreen({ route, navigation }: Props) {
         </TouchableOpacity>
       )}
 
+      {suggestion && (suggestion.name || suggestion.brand) ? (
+        <View style={styles.suggestionBanner}>
+          <Ionicons name="sparkles-outline" size={16} color={colors.primary} />
+          <Text style={styles.suggestionText} numberOfLines={1}>
+            {[suggestion.name, suggestion.brand].filter(Boolean).join(' · ')}
+          </Text>
+          <TouchableOpacity style={styles.suggestionUse} onPress={applySuggestion}>
+            <Text style={styles.suggestionUseText}>Use</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setSuggestion(null)}
+            accessibilityLabel="Dismiss suggestion"
+          >
+            <Ionicons name="close" size={16} color={colors.textMuted} />
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
       <Text style={styles.label}>Photo</Text>
       {displayedPhotoUri ? (
         <View style={styles.photoPreviewBox}>
@@ -539,6 +591,32 @@ const styles = StyleSheet.create({
   },
   photoActionButton: {
     padding: 6,
+  },
+  suggestionBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#EAF3FF',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginTop: 10,
+  },
+  suggestionText: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  suggestionUse: {
+    backgroundColor: colors.primary,
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  suggestionUseText: {
+    color: 'white',
+    fontSize: 13,
+    fontWeight: '600',
   },
   verdictButton: {
     flex: 1,
