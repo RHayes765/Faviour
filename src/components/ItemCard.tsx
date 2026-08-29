@@ -11,9 +11,11 @@ interface Props {
   item: Item;
   profileName: string;
   onPress: () => void;
+  /** Dense ladder position, computed by the parent via rankInfo(). */
+  rankBadge?: { position: number; total: number } | null;
 }
 
-export function ItemCard({ item, profileName, onPress }: Props) {
+export function ItemCard({ item, profileName, onPress, rankBadge }: Props) {
   const liked = item.preference === 'like';
   const photo = photoUri(item.photoFileName);
   return (
@@ -23,7 +25,14 @@ export function ItemCard({ item, profileName, onPress }: Props) {
       accessibilityLabel={`View ${item.name}`}
     >
       <View style={styles.header}>
-        <VerdictBadge preference={item.preference} size="large" />
+        <View style={styles.badges}>
+          <VerdictBadge preference={item.preference} size="large" />
+          {rankBadge ? (
+            <View style={styles.rankPill}>
+              <Text style={styles.rankPillText}>#{rankBadge.position}</Text>
+            </View>
+          ) : null}
+        </View>
         <Text style={styles.meta}>
           {profileName} · {formatTriedDate(item.updatedAt)}
         </Text>
@@ -76,6 +85,22 @@ const styles = StyleSheet.create({
   meta: {
     fontSize: 13,
     color: colors.textMuted,
+  },
+  badges: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  rankPill: {
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+  },
+  rankPillText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '700',
   },
   body: {
     flexDirection: 'row',

@@ -2,6 +2,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { DataProvider, useData } from './src/context/DataContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
@@ -42,13 +43,18 @@ function Root() {
 
 export default function App() {
   return (
-    <DataProvider>
-      <Root />
-    </DataProvider>
+    <GestureHandlerRootView style={styles.flex}>
+      <DataProvider>
+        <Root />
+      </DataProvider>
+    </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
   gate: {
     flex: 1,
     justifyContent: 'center',

@@ -17,6 +17,7 @@ import { useData } from '../context/DataContext';
 import type { RootStackParamList } from '../navigation/types';
 import { colors } from '../theme';
 import { barcodesMatch, normalizeBarcode } from '../utils/barcode';
+import { rankInfo } from '../utils/ranking';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Scan'>;
 
@@ -113,6 +114,14 @@ export function ScanScreen({ route, navigation }: Props) {
                     <VerdictBadge preference={item.preference} size="large" />
                     <View style={styles.matchInfo}>
                       <Text style={styles.matchProfile}>{profileName(item.profileId)}</Text>
+                      {(() => {
+                        const info = rankInfo(items, item);
+                        return info ? (
+                          <Text style={styles.matchNotes}>
+                            Ranked #{info.position} of {info.total} in {item.category}
+                          </Text>
+                        ) : null;
+                      })()}
                       {item.notes ? (
                         <Text style={styles.matchNotes} numberOfLines={1}>
                           {item.notes}

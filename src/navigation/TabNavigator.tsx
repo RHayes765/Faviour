@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
 
+import { InsightsScreen } from '../screens/InsightsScreen';
 import { ItemsScreen } from '../screens/ItemsScreen';
 import { ProfilesScreen } from '../screens/ProfilesScreen';
 import { colors } from '../theme';
@@ -22,14 +23,19 @@ export function TabNavigator() {
               ? focused
                 ? 'search'
                 : 'search-outline'
-              : focused
-                ? 'people'
-                : 'people-outline';
+              : route.name === 'Insights'
+                ? focused
+                  ? 'stats-chart'
+                  : 'stats-chart-outline'
+                : focused
+                  ? 'people'
+                  : 'people-outline';
           return <Ionicons name={name} size={size} color={color} />;
         },
       })}
     >
       <Tab.Screen name="Lookup" component={ItemsScreen} />
+      <Tab.Screen name="Insights" component={InsightsScreen} />
       <Tab.Screen name="Profiles" component={ProfilesScreen} />
     </Tab.Navigator>
   );

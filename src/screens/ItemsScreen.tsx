@@ -21,6 +21,7 @@ import { useData } from '../context/DataContext';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
 import { colors } from '../theme';
 import type { Preference } from '../types';
+import { rankInfo } from '../utils/ranking';
 import { ALL_FILTER, filterItems, sortByRecency } from '../utils/search';
 
 type Props = CompositeScreenProps<
@@ -203,6 +204,21 @@ export function ItemsScreen({ route, navigation }: Props) {
             </Picker>
           </View>
 
+          {selectedCategory !== ALL ? (
+            <TouchableOpacity
+              style={styles.rankCategoryButton}
+              onPress={() =>
+                navigation.navigate('CategoryRank', {
+                  category: selectedCategory,
+                  profileId: selectedProfile !== ALL ? selectedProfile : undefined,
+                })
+              }
+            >
+              <Ionicons name="trophy-outline" size={16} color={colors.primary} />
+              <Text style={styles.rankCategoryText}>Rank this category</Text>
+            </TouchableOpacity>
+          ) : null}
+
           <View style={styles.filterGroup}>
             <Text style={styles.filterLabel}>Verdict</Text>
             <Picker
@@ -255,6 +271,7 @@ export function ItemsScreen({ route, navigation }: Props) {
             <ItemCard
               item={item}
               profileName={profileName(item.profileId)}
+              rankBadge={rankInfo(items, item)}
               onPress={() => navigation.navigate('ItemDetail', { itemId: item.id })}
             />
           )}
@@ -371,6 +388,22 @@ const styles = StyleSheet.create({
   },
   filterGroup: {
     marginBottom: 12,
+  },
+  rankCategoryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: 8,
+    paddingVertical: 9,
+    marginBottom: 12,
+  },
+  rankCategoryText: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: '500',
   },
   filterLabel: {
     fontSize: 14,

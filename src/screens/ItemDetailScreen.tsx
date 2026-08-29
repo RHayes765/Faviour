@@ -18,6 +18,7 @@ import { colors, profileColor } from '../theme';
 import { formatTriedDate } from '../utils/dates';
 import { confirmDestructive } from '../utils/confirm';
 import { photoUri } from '../utils/photos';
+import { rankInfo } from '../utils/ranking';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ItemDetail'>;
 
@@ -77,6 +78,29 @@ export function ItemDetailScreen({ route, navigation }: Props) {
           </View>
           <Text style={styles.profileName}>{profile.name}&apos;s verdict</Text>
         </View>
+      ) : null}
+
+      {item.category.trim() ? (
+        <TouchableOpacity
+          style={styles.rankRow}
+          onPress={() =>
+            navigation.navigate('CategoryRank', {
+              category: item.category,
+              profileId: item.profileId,
+            })
+          }
+        >
+          <Ionicons name="trophy-outline" size={18} color={colors.primary} />
+          <Text style={styles.rankRowText}>
+            {(() => {
+              const info = rankInfo(items, item);
+              return info
+                ? `#${info.position} of ${info.total} in ${item.category} · Edit ranking`
+                : `Rank in ${item.category}`;
+            })()}
+          </Text>
+          <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+        </TouchableOpacity>
       ) : null}
 
       {item.reasonTags.length > 0 ? (
@@ -190,6 +214,21 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: 15,
     color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  rankRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.card,
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 16,
+  },
+  rankRowText: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.text,
     fontWeight: '500',
   },
   sectionLabel: {
