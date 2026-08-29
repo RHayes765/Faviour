@@ -27,7 +27,8 @@ interface DataContextValue {
   addItem: (input: NewItemInput) => Promise<Item>;
   updateItem: (id: string, patch: Partial<NewItemInput>) => Promise<Item>;
   removeItem: (id: string) => Promise<void>;
-  addReasonTag: (tag: string) => Promise<void>;
+  /** Persists a tag and returns the canonical (deduped) tag list. */
+  addReasonTag: (tag: string) => Promise<string[]>;
 }
 
 const DataContext = createContext<DataContextValue | null>(null);
@@ -95,6 +96,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const addReasonTag = useCallback(async (tag: string) => {
     const tags = await repoRef.current.addReasonTag(tag);
     setReasonTags(tags);
+    return tags;
   }, []);
 
   const categories = useMemo(

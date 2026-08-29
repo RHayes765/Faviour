@@ -12,6 +12,7 @@ import {
 
 import { ProfileChips } from '../components/ProfileChips';
 import { SuggestionInput } from '../components/SuggestionInput';
+import { TagPicker } from '../components/TagPicker';
 import { useData } from '../context/DataContext';
 import type { RootStackParamList } from '../navigation/types';
 import { colors } from '../theme';
@@ -27,10 +28,12 @@ export function AddItemScreen({ route, navigation }: Props) {
     items,
     categories,
     brands,
+    reasonTags,
     addProfile,
     addItem,
     updateItem,
     removeItem,
+    addReasonTag,
   } = useData();
 
   const itemToEdit = route.params?.itemId
@@ -42,6 +45,9 @@ export function AddItemScreen({ route, navigation }: Props) {
   const [brand, setBrand] = useState(itemToEdit?.brand ?? '');
   const [preference, setPreference] = useState<Preference>(itemToEdit?.preference ?? 'like');
   const [notes, setNotes] = useState(itemToEdit?.notes ?? '');
+  const [selectedTags, setSelectedTags] = useState<string[]>(
+    itemToEdit?.reasonTags ?? [],
+  );
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(
     itemToEdit?.profileId ?? profiles[0]?.id ?? null,
   );
@@ -100,6 +106,7 @@ export function AddItemScreen({ route, navigation }: Props) {
       category,
       brand,
       preference,
+      reasonTags: selectedTags,
       notes,
       barcode,
       profileId: selectedProfileId,
@@ -228,6 +235,20 @@ export function AddItemScreen({ route, navigation }: Props) {
           </Text>
         </TouchableOpacity>
       </View>
+
+      <Text style={styles.label}>Why? Tap what applies</Text>
+      <TagPicker
+        availableTags={reasonTags}
+        selectedTags={selectedTags}
+        onToggleTag={(tag) =>
+          setSelectedTags((prev) =>
+            prev.some((t) => t.toLowerCase() === tag.toLowerCase())
+              ? prev.filter((t) => t.toLowerCase() !== tag.toLowerCase())
+              : [...prev, tag],
+          )
+        }
+        onCreateTag={addReasonTag}
+      />
 
       <Text style={styles.label}>Barcode</Text>
       {barcode ? (

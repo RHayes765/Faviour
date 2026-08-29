@@ -36,6 +36,18 @@ export function ItemCard({ item, profileName, onEdit, onDelete }: Props) {
       <Text style={styles.meta}>
         {profileName} · Tried {formatTriedDate(item.updatedAt)}
       </Text>
+      {item.reasonTags.length > 0 ? (
+        <View style={styles.tagRow}>
+          {item.reasonTags.slice(0, 3).map((tag) => (
+            <View key={tag} style={styles.tag}>
+              <Text style={styles.tagText}>{tag}</Text>
+            </View>
+          ))}
+          {item.reasonTags.length > 3 ? (
+            <Text style={styles.tagMore}>+{item.reasonTags.length - 3}</Text>
+          ) : null}
+        </View>
+      ) : null}
       {item.notes ? <Text style={styles.notes}>{item.notes}</Text> : null}
     </View>
   );
@@ -88,5 +100,26 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 8,
     fontStyle: 'italic',
+  },
+  tagRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 8,
+  },
+  tag: {
+    backgroundColor: colors.chipBackground,
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  tagText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  tagMore: {
+    fontSize: 12,
+    color: colors.textMuted,
   },
 });
