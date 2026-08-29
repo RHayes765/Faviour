@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AuthProvider } from './src/context/AuthContext';
 import { DataProvider, useData } from './src/context/DataContext';
+import { SyncProvider } from './src/context/SyncContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { colors } from './src/theme';
 
@@ -47,7 +48,9 @@ export default function App() {
     <GestureHandlerRootView style={styles.flex}>
       <AuthProvider>
         <DataProvider>
-          <Root />
+          <SyncProvider>
+            <Root />
+          </SyncProvider>
         </DataProvider>
       </AuthProvider>
     </GestureHandlerRootView>

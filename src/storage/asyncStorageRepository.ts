@@ -11,7 +11,12 @@ import { dedupeTags } from '../utils/tags';
 import { newId } from './ids';
 import { mergeSnapshots } from './merge';
 import { CURRENT_SCHEMA_VERSION, runMigrations } from './migrations';
-import type { FaviourRepository, ImportMode } from './repository';
+import type {
+  FaviourRepository,
+  ImportMode,
+  ImportOptions,
+  Tombstone,
+} from './repository';
 
 const KEYS = {
   meta: '@faviour:meta',
@@ -21,6 +26,8 @@ const KEYS = {
 } as const;
 
 export const PRE_IMPORT_BACKUP_KEY = '@faviour:pre-import-backup';
+export const TOMBSTONES_KEY = '@faviour:tombstones';
+const TOMBSTONE_CAP = 500;
 
 function parseJson<T>(raw: string | null | undefined, key: string): T | undefined {
   if (raw == null) {
@@ -102,11 +109,17 @@ export class AsyncStorageRepository implements FaviourRepository {
 
   async deleteProfile(id: string): Promise<void> {
     const db = await this.requireDb();
+    const doomedItems = db.items.filter((i) => i.profileId === id).map((i) => i.id);
     db.profiles = db.profiles.filter((p) => p.id !== id);
     db.items = db.items.filter((i) => i.profileId !== id);
     await AsyncStorage.multiSet([
       [KEYS.profiles, JSON.stringify(db.profiles)],
       [KEYS.items, JSON.stringify(db.items)],
+    ]);
+    const deletedAt = nowIso();
+    await this.appendTombstones([
+      { kind: 'profile', id, deletedAt },
+      ...doomedItems.map((itemId): Tombstone => ({ kind: 'item', id: itemId, deletedAt })),
     ]);
   }
 
@@ -170,6 +183,7 @@ export class AsyncStorageRepository implements FaviourRepository {
     const db = await this.requireDb();
     db.items = db.items.filter((i) => i.id !== id);
     await AsyncStorage.setItem(KEYS.items, JSON.stringify(db.items));
+    await this.appendTombstones([{ kind: 'item', id, deletedAt: nowIso() }]);
   }
 
   async addReasonTag(tag: string): Promise<string[]> {
@@ -205,19 +219,64 @@ export class AsyncStorageRepository implements FaviourRepository {
     return this.load();
   }
 
-  async importSnapshot(incoming: DbSnapshot, mode: ImportMode): Promise<DbSnapshot> {
+  async importSnapshot(
+    incoming: DbSnapshot,
+    mode: ImportMode,
+    options?: ImportOptions,
+  ): Promise<DbSnapshot> {
     const db = await this.requireDb();
     try {
       await AsyncStorage.setItem(PRE_IMPORT_BACKUP_KEY, JSON.stringify(db));
     } catch (e) {
       console.warn('Failed to write pre-import backup', e);
     }
+    const previous = db;
     this.db =
       mode === 'replace'
         ? { ...incoming, schemaVersion: CURRENT_SCHEMA_VERSION }
         : mergeSnapshots(db, incoming);
     await this.persistAll();
+    if (mode === 'replace' && (options?.journalRemovals ?? true)) {
+      const deletedAt = nowIso();
+      const keptProfiles = new Set(this.db.profiles.map((p) => p.id));
+      const keptItems = new Set(this.db.items.map((i) => i.id));
+      const removed: Tombstone[] = [
+        ...previous.profiles
+          .filter((p) => !keptProfiles.has(p.id))
+          .map((p): Tombstone => ({ kind: 'profile', id: p.id, deletedAt })),
+        ...previous.items
+          .filter((i) => !keptItems.has(i.id))
+          .map((i): Tombstone => ({ kind: 'item', id: i.id, deletedAt })),
+      ];
+      if (removed.length > 0) {
+        await this.appendTombstones(removed);
+      }
+    }
     return this.snapshot();
+  }
+
+  async getTombstones(): Promise<Tombstone[]> {
+    const raw = await AsyncStorage.getItem(TOMBSTONES_KEY);
+    const parsed = parseJson<Tombstone[]>(raw, TOMBSTONES_KEY);
+    return Array.isArray(parsed) ? parsed : [];
+  }
+
+  async pruneTombstones(ids: string[]): Promise<void> {
+    const drop = new Set(ids);
+    const remaining = (await this.getTombstones()).filter((t) => !drop.has(t.id));
+    await AsyncStorage.setItem(TOMBSTONES_KEY, JSON.stringify(remaining));
+  }
+
+  private async appendTombstones(entries: Tombstone[]): Promise<void> {
+    try {
+      const journal = [...(await this.getTombstones()), ...entries];
+      await AsyncStorage.setItem(
+        TOMBSTONES_KEY,
+        JSON.stringify(journal.slice(-TOMBSTONE_CAP)),
+      );
+    } catch (e) {
+      console.warn('Failed to append tombstones', e);
+    }
   }
 
   private async requireDb(): Promise<DbSnapshot> {

@@ -63,6 +63,18 @@ export function pruneMissingPhotos<T extends { photoFileName: string | null }>(
   });
 }
 
+/** Whether a stored photo file exists on THIS device (always false on web). */
+export function photoFileExists(fileName: string): boolean {
+  if (Platform.OS === 'web') {
+    return false;
+  }
+  try {
+    return new File(photosDir(), fileName).exists;
+  } catch {
+    return false;
+  }
+}
+
 export function deletePhoto(fileName: string | null): void {
   if (!fileName || Platform.OS === 'web') {
     return;

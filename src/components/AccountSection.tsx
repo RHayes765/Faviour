@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 
 import { useAuth } from '../context/AuthContext';
+import { useSync } from '../context/SyncContext';
 import { colors } from '../theme';
 import { confirmDestructive, showAlert } from '../utils/confirm';
 
@@ -23,6 +24,7 @@ const OAUTH_PROVIDERS: {
 
 export function AccountSection() {
   const auth = useAuth();
+  const sync = useSync();
   const [email, setEmail] = useState('');
   const [codeSent, setCodeSent] = useState(false);
   const [code, setCode] = useState('');
@@ -74,6 +76,27 @@ export function AccountSection() {
           />
           <Text style={styles.identityText}>{auth.userEmail ?? 'Signed in'}</Text>
         </View>
+
+        <TouchableOpacity
+          style={[styles.syncButton, sync.syncing && styles.disabled]}
+          disabled={sync.syncing}
+          onPress={() => {
+            void sync.syncNow();
+          }}
+        >
+          <Ionicons name="sync-outline" size={16} color="white" />
+          <Text style={styles.syncButtonText}>
+            {sync.syncing ? 'Syncing…' : 'Sync now'}
+          </Text>
+        </TouchableOpacity>
+        <Text style={sync.lastError ? styles.errorText : styles.syncStatusText}>
+          {sync.lastError
+            ? `Sync problem: ${sync.lastError}`
+            : sync.lastSyncAt
+              ? `Last synced ${new Date(sync.lastSyncAt).toLocaleString()}`
+              : 'Not synced yet'}
+        </Text>
+
         <TouchableOpacity
           style={styles.secondaryButton}
           onPress={() => {
@@ -291,6 +314,34 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: 13,
     marginTop: 10,
+  },
+  syncButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    paddingVertical: 11,
+  },
+  syncButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  syncStatusText: {
+    fontSize: 12,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: 6,
+    marginBottom: 10,
+  },
+  errorText: {
+    fontSize: 12,
+    color: colors.dislike,
+    textAlign: 'center',
+    marginTop: 6,
+    marginBottom: 10,
   },
   secondaryButton: {
     borderWidth: 1,

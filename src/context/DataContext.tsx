@@ -8,8 +8,8 @@ import React, {
   useState,
 } from 'react';
 
-import { AsyncStorageRepository } from '../storage/asyncStorageRepository';
-import type { FaviourRepository, ImportMode } from '../storage/repository';
+import type { ImportMode, ImportOptions } from '../storage/repository';
+import { repository } from '../storage/repositoryInstance';
 import type { DbSnapshot, Item, NewItemInput, Profile } from '../types';
 import { deletePhoto } from '../utils/photos';
 import { distinctValues } from '../utils/search';
@@ -35,7 +35,11 @@ interface DataContextValue {
   /** Persists a tag and returns the canonical (deduped) tag list. */
   addReasonTag: (tag: string) => Promise<string[]>;
   exportData: () => Promise<DbSnapshot>;
-  importData: (incoming: DbSnapshot, mode: ImportMode) => Promise<void>;
+  importData: (
+    incoming: DbSnapshot,
+    mode: ImportMode,
+    options?: ImportOptions,
+  ) => Promise<void>;
   /** Reorders one profile+category ladder; listed ids become rank 1..n. */
   setCategoryRanks: (
     profileId: string,
@@ -47,7 +51,7 @@ interface DataContextValue {
 const DataContext = createContext<DataContextValue | null>(null);
 
 export function DataProvider({ children }: { children: React.ReactNode }) {
-  const repoRef = useRef<FaviourRepository>(new AsyncStorageRepository());
+  const repoRef = useRef(repository);
   const [ready, setReady] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
@@ -132,12 +136,15 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   const exportData = useCallback(async () => repoRef.current.exportSnapshot(), []);
 
-  const importData = useCallback(async (incoming: DbSnapshot, mode: ImportMode) => {
-    const db = await repoRef.current.importSnapshot(incoming, mode);
-    setProfiles(db.profiles);
-    setItems(db.items);
-    setReasonTags(db.reasonTags);
-  }, []);
+  const importData = useCallback(
+    async (incoming: DbSnapshot, mode: ImportMode, options?: ImportOptions) => {
+      const db = await repoRef.current.importSnapshot(incoming, mode, options);
+      setProfiles(db.profiles);
+      setItems(db.items);
+      setReasonTags(db.reasonTags);
+    },
+    [],
+  );
 
   const setCategoryRanks = useCallback(
     async (profileId: string, category: string, orderedItemIds: string[]) => {

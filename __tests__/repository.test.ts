@@ -155,6 +155,53 @@ describe('AsyncStorageRepository', () => {
     expect(moved.rankInCategory).toBeNull();
   });
 
+  it('journals tombstones for item deletes and profile-cascade deletes', async () => {
+    const repo = makeRepo();
+    const keep = await repo.createProfile({ name: 'Keep' });
+    const drop = await repo.createProfile({ name: 'Drop' });
+    const kept = await repo.createItem(itemInput(keep.id, { name: 'kept' }));
+    const doomed1 = await repo.createItem(itemInput(drop.id, { name: 'd1' }));
+    const doomed2 = await repo.createItem(itemInput(drop.id, { name: 'd2' }));
+
+    await repo.deleteItem(kept.id);
+    await repo.deleteProfile(drop.id);
+
+    const journal = await repo.getTombstones();
+    const byId = Object.fromEntries(journal.map((t) => [t.id, t.kind]));
+    expect(byId[kept.id]).toBe('item');
+    expect(byId[drop.id]).toBe('profile');
+    expect(byId[doomed1.id]).toBe('item');
+    expect(byId[doomed2.id]).toBe('item');
+
+    await repo.pruneTombstones([kept.id]);
+    expect((await repo.getTombstones()).map((t) => t.id)).not.toContain(kept.id);
+  });
+
+  it('replace-import journals removed rows unless told not to (sync apply)', async () => {
+    const repo = makeRepo();
+    const profile = await repo.createProfile({ name: 'Ryley' });
+    const item = await repo.createItem(itemInput(profile.id));
+    const empty = {
+      schemaVersion: 2,
+      profiles: [],
+      items: [],
+      reasonTags: [],
+    };
+
+    await repo.importSnapshot(empty, 'replace');
+    const journaled = (await repo.getTombstones()).map((t) => t.id);
+    expect(journaled).toContain(profile.id);
+    expect(journaled).toContain(item.id);
+
+    // sync apply path must NOT journal
+    await AsyncStorage.clear();
+    const repo2 = makeRepo();
+    const p2 = await repo2.createProfile({ name: 'Ryley' });
+    await repo2.createItem(itemInput(p2.id));
+    await repo2.importSnapshot(empty, 'replace', { journalRemovals: false });
+    expect(await repo2.getTombstones()).toEqual([]);
+  });
+
   it('exportSnapshot returns the current data and importSnapshot(replace) swaps everything', async () => {
     const repo = makeRepo();
     const oldProfile = await repo.createProfile({ name: 'OldPhone' });

@@ -8,6 +8,22 @@ import type {
 
 export type ImportMode = 'replace' | 'merge';
 
+export interface ImportOptions {
+  /**
+   * Whether rows removed by a 'replace' import are recorded as tombstones
+   * (default true — a user-initiated restore should propagate deletions).
+   * The sync engine's apply step passes false: its removals were already
+   * reconciled against remote tombstones.
+   */
+  journalRemovals?: boolean;
+}
+
+export interface Tombstone {
+  kind: 'item' | 'profile';
+  id: string;
+  deletedAt: string; // ISO 8601
+}
+
 /**
  * The persistence seam. UI code (via DataContext) only ever talks to this
  * interface, so AsyncStorage can later be swapped for SQLite or a backend
@@ -43,5 +59,16 @@ export interface FaviourRepository {
    * Writes a best-effort copy of the pre-import database to a backup key
    * first, persists once, and returns the new full snapshot.
    */
-  importSnapshot(incoming: DbSnapshot, mode: ImportMode): Promise<DbSnapshot>;
+  importSnapshot(
+    incoming: DbSnapshot,
+    mode: ImportMode,
+    options?: ImportOptions,
+  ): Promise<DbSnapshot>;
+  /**
+   * Deletion journal for sync: every delete (item, profile + its cascaded
+   * items, and replace-import removals) appends here so deletions propagate
+   * to the cloud. Newest 500 kept; pruned only after a successful push.
+   */
+  getTombstones(): Promise<Tombstone[]>;
+  pruneTombstones(ids: string[]): Promise<void>;
 }
