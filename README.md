@@ -37,6 +37,24 @@ npm run typecheck
 npm run web           # browser dev surface (camera/photos limited there)
 ```
 
+## Building the standalone APK
+
+Expo Go stays the dev loop; the standalone APK is what lives on phones
+(works offline, no Metro tether). JS changes require a rebuild + reinstall.
+
+```
+npx expo prebuild --platform android --clean
+cd android
+.\gradlew.bat assembleRelease
+```
+
+Output: `android\app\build\outputs\apk\release\app-release.apk`. Install with
+`adb install -r <apk>` (USB debugging) or share the file and sideload. Bump
+`android.versionCode` in app.json for every rebuild so updates install over
+prior versions. The release build is signed with the template debug keystore —
+fine for sideloading, not for the Play Store. `/android` is generated (CNG)
+and gitignored.
+
 ## Architecture notes
 
 - `src/storage/repository.ts` — the persistence seam. UI code only talks to
