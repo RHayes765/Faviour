@@ -21,7 +21,6 @@ import { useData } from '../context/DataContext';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
 import { colors } from '../theme';
 import type { Preference } from '../types';
-import { confirmDestructive } from '../utils/confirm';
 import { filterItems, sortByRecency } from '../utils/search';
 
 type Props = CompositeScreenProps<
@@ -32,7 +31,7 @@ type Props = CompositeScreenProps<
 const ALL = 'all';
 
 export function ItemsScreen({ route, navigation }: Props) {
-  const { profiles, items, categories, brands, removeItem } = useData();
+  const { profiles, items, categories, brands } = useData();
   const [selectedProfile, setSelectedProfile] = useState<string>(ALL);
   const [selectedCategory, setSelectedCategory] = useState<string>(ALL);
   const [selectedBrand, setSelectedBrand] = useState<string>(ALL);
@@ -77,16 +76,6 @@ export function ItemsScreen({ route, navigation }: Props) {
     setSelectedBrand(ALL);
     setSelectedPreference(ALL);
     setSearchQuery('');
-  };
-
-  const handleDeleteItem = (id: string) => {
-    confirmDestructive({
-      title: 'Delete Item',
-      message: 'Are you sure you want to delete this item?',
-      onConfirm: () => {
-        void removeItem(id);
-      },
-    });
   };
 
   const profileName = (profileId: string) =>
@@ -257,8 +246,7 @@ export function ItemsScreen({ route, navigation }: Props) {
             <ItemCard
               item={item}
               profileName={profileName(item.profileId)}
-              onEdit={() => navigation.navigate('AddItem', { itemId: item.id })}
-              onDelete={() => handleDeleteItem(item.id)}
+              onPress={() => navigation.navigate('ItemDetail', { itemId: item.id })}
             />
           )}
         />

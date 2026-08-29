@@ -1,0 +1,249 @@
+import { Ionicons } from '@expo/vector-icons';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import React, { useLayoutEffect } from 'react';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+
+import { EmptyState } from '../components/EmptyState';
+import { VerdictBadge } from '../components/VerdictBadge';
+import { useData } from '../context/DataContext';
+import type { RootStackParamList } from '../navigation/types';
+import { colors, profileColor } from '../theme';
+import { formatTriedDate } from '../utils/dates';
+import { confirmDestructive } from '../utils/confirm';
+
+type Props = NativeStackScreenProps<RootStackParamList, 'ItemDetail'>;
+
+export function ItemDetailScreen({ route, navigation }: Props) {
+  const { items, profiles, removeItem } = useData();
+  const item = items.find((i) => i.id === route.params.itemId);
+  const profile = item ? profiles.find((p) => p.id === item.profileId) : undefined;
+
+  useLayoutEffect(() => {
+    navigation.setOptions({ title: item?.name ?? 'Item' });
+  }, [navigation, item?.name]);
+
+  if (!item) {
+    return (
+      <View style={styles.container}>
+        <EmptyState
+          icon="help-circle-outline"
+          title="Item not found"
+          subtitle="It may have been deleted"
+          buttonLabel="Go back"
+          onButtonPress={() => navigation.goBack()}
+        />
+      </View>
+    );
+  }
+
+  const handleDelete = () => {
+    confirmDestructive({
+      title: 'Delete Item',
+      message: `Delete ${item.name}? This can't be undone.`,
+      onConfirm: () => {
+        void removeItem(item.id).then(() => navigation.goBack());
+      },
+    });
+  };
+
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <View style={styles.verdictRow}>
+        <VerdictBadge preference={item.preference} size="large" />
+        <Text style={styles.triedDate}>Tried {formatTriedDate(item.updatedAt)}</Text>
+      </View>
+
+      <Text style={styles.name}>{item.name}</Text>
+      <Text style={styles.brandLine}>
+        {item.brand} · {item.category}
+      </Text>
+
+      {profile ? (
+        <View style={styles.profileRow}>
+          <View style={[styles.avatar, { backgroundColor: profileColor(profile.name) }]}>
+            <Text style={styles.avatarText}>{profile.name.charAt(0).toUpperCase()}</Text>
+          </View>
+          <Text style={styles.profileName}>{profile.name}&apos;s verdict</Text>
+        </View>
+      ) : null}
+
+      {item.reasonTags.length > 0 ? (
+        <>
+          <Text style={styles.sectionLabel}>Why</Text>
+          <View style={styles.tagRow}>
+            {item.reasonTags.map((tag) => (
+              <View key={tag} style={styles.tag}>
+                <Text style={styles.tagText}>{tag}</Text>
+              </View>
+            ))}
+          </View>
+        </>
+      ) : null}
+
+      {item.notes ? (
+        <>
+          <Text style={styles.sectionLabel}>Notes</Text>
+          <Text style={styles.notes}>{item.notes}</Text>
+        </>
+      ) : null}
+
+      {item.barcode ? (
+        <>
+          <Text style={styles.sectionLabel}>Barcode</Text>
+          <View style={styles.barcodeRow}>
+            <Ionicons name="barcode-outline" size={18} color={colors.textSecondary} />
+            <Text style={styles.barcodeText}>{item.barcode}</Text>
+          </View>
+        </>
+      ) : null}
+
+      <Text style={styles.sectionLabel}>History</Text>
+      <Text style={styles.historyText}>
+        Added {formatTriedDate(item.createdAt)}
+        {item.updatedAt !== item.createdAt
+          ? ` · Updated ${formatTriedDate(item.updatedAt)}`
+          : ''}
+      </Text>
+
+      <TouchableOpacity
+        style={styles.editButton}
+        onPress={() => navigation.navigate('AddItem', { itemId: item.id })}
+      >
+        <Ionicons name="pencil" size={18} color="white" />
+        <Text style={styles.editButtonText}>Edit</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+        <Text style={styles.deleteButtonText}>Delete Item</Text>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  content: {
+    padding: 20,
+    paddingBottom: 48,
+  },
+  verdictRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  triedDate: {
+    fontSize: 14,
+    color: colors.textMuted,
+  },
+  name: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.text,
+    marginTop: 14,
+  },
+  brandLine: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    marginTop: 4,
+  },
+  profileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 16,
+    gap: 10,
+  },
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  profileName: {
+    fontSize: 15,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginTop: 22,
+    marginBottom: 8,
+  },
+  tagRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  tag: {
+    backgroundColor: colors.chipBackground,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  tagText: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  notes: {
+    fontSize: 15,
+    color: colors.textSecondary,
+    lineHeight: 22,
+  },
+  barcodeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  barcodeText: {
+    fontSize: 15,
+    color: colors.textSecondary,
+    fontVariant: ['tabular-nums'],
+  },
+  historyText: {
+    fontSize: 14,
+    color: colors.textMuted,
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    paddingVertical: 14,
+    marginTop: 32,
+  },
+  editButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  deleteButton: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  deleteButtonText: {
+    color: colors.dislike,
+    fontSize: 15,
+    fontWeight: '500',
+  },
+});

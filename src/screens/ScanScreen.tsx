@@ -102,7 +102,7 @@ export function ScanScreen({ route, navigation }: Props) {
                   <TouchableOpacity
                     key={item.id}
                     style={styles.matchRow}
-                    onPress={() => navigation.replace('AddItem', { itemId: item.id })}
+                    onPress={() => navigation.replace('ItemDetail', { itemId: item.id })}
                   >
                     <VerdictBadge preference={item.preference} size="large" />
                     <View style={styles.matchInfo}>

@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -10,31 +9,26 @@ import { VerdictBadge } from './VerdictBadge';
 interface Props {
   item: Item;
   profileName: string;
-  onEdit: () => void;
-  onDelete: () => void;
+  onPress: () => void;
 }
 
-export function ItemCard({ item, profileName, onEdit, onDelete }: Props) {
+export function ItemCard({ item, profileName, onPress }: Props) {
   const liked = item.preference === 'like';
   return (
-    <View style={[styles.card, { borderLeftColor: liked ? colors.like : colors.dislike }]}>
+    <TouchableOpacity
+      style={[styles.card, { borderLeftColor: liked ? colors.like : colors.dislike }]}
+      onPress={onPress}
+      accessibilityLabel={`View ${item.name}`}
+    >
       <View style={styles.header}>
         <VerdictBadge preference={item.preference} size="large" />
-        <View style={styles.actions}>
-          <TouchableOpacity style={styles.actionButton} onPress={onEdit} accessibilityLabel="Edit item">
-            <Ionicons name="pencil" size={20} color={colors.primary} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={onDelete} accessibilityLabel="Delete item">
-            <Ionicons name="trash-outline" size={20} color={colors.dislike} />
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.meta}>
+          {profileName} · {formatTriedDate(item.updatedAt)}
+        </Text>
       </View>
       <Text style={styles.name}>{item.name}</Text>
       <Text style={styles.detail}>
         {item.brand} · {item.category}
-      </Text>
-      <Text style={styles.meta}>
-        {profileName} · Tried {formatTriedDate(item.updatedAt)}
       </Text>
       {item.reasonTags.length > 0 ? (
         <View style={styles.tagRow}>
@@ -48,8 +42,12 @@ export function ItemCard({ item, profileName, onEdit, onDelete }: Props) {
           ) : null}
         </View>
       ) : null}
-      {item.notes ? <Text style={styles.notes}>{item.notes}</Text> : null}
-    </View>
+      {item.notes ? (
+        <Text style={styles.notes} numberOfLines={2}>
+          {item.notes}
+        </Text>
+      ) : null}
+    </TouchableOpacity>
   );
 }
 
@@ -72,13 +70,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  actionButton: {
-    padding: 6,
-    marginLeft: 8,
+  meta: {
+    fontSize: 13,
+    color: colors.textMuted,
   },
   name: {
     fontSize: 19,
@@ -89,11 +83,6 @@ const styles = StyleSheet.create({
   detail: {
     fontSize: 14,
     color: colors.textSecondary,
-    marginBottom: 2,
-  },
-  meta: {
-    fontSize: 13,
-    color: colors.textMuted,
   },
   notes: {
     fontSize: 14,

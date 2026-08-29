@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 
 import { AddItemScreen } from '../screens/AddItemScreen';
+import { ItemDetailScreen } from '../screens/ItemDetailScreen';
 import { ScanScreen } from '../screens/ScanScreen';
 import { TabNavigator } from './TabNavigator';
 import type { RootStackParamList } from './types';
@@ -25,6 +26,11 @@ export function AppNavigator() {
         name="Scan"
         component={ScanScreen}
         options={{ title: 'Scan Barcode' }}
+      />
+      <Stack.Screen
+        name="ItemDetail"
+        component={ItemDetailScreen}
+        options={{ title: 'Item' }}
       />
     </Stack.Navigator>
   );

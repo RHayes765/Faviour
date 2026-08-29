@@ -17,4 +17,5 @@ export type RootStackParamList = {
       }
     | undefined;
   Scan: { mode?: 'capture' } | undefined;
+  ItemDetail: { itemId: string };
 };
