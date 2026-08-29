@@ -43,10 +43,16 @@ Expo Go stays the dev loop; the standalone APK is what lives on phones
 (works offline, no Metro tether). JS changes require a rebuild + reinstall.
 
 ```
+npx expo-doctor
 npx expo prebuild --platform android --clean
 cd android
 .\gradlew.bat assembleRelease
 ```
+
+`expo-doctor` must pass 18/18 before building: duplicate/mismatched native
+module versions compile fine but crash standalone builds at launch (Expo Go
+masks this — it ships its own natives). Smoke the APK on an emulator before
+installing it on phones.
 
 Output: `android\app\build\outputs\apk\release\app-release.apk`. Install with
 `adb install -r <apk>` (USB debugging) or share the file and sideload. Bump
