@@ -52,6 +52,18 @@ describe('AsyncStorageRepository', () => {
     expect(item.createdAt).toBe(item.updatedAt);
   });
 
+  it('does not lose writes when mutations race the initial load', async () => {
+    const repo = makeRepo();
+    // Both mutations fire before any load has hydrated the mirror; a
+    // non-single-flighted load would clobber one of them.
+    await Promise.all([
+      repo.createProfile({ name: 'A' }),
+      repo.createProfile({ name: 'B' }),
+    ]);
+    const db = await makeRepo().load();
+    expect(db.profiles.map((p) => p.name).sort()).toEqual(['A', 'B']);
+  });
+
   it('persists across repository instances (fresh load sees prior writes)', async () => {
     const repo = makeRepo();
     const profile = await repo.createProfile({ name: 'Wife' });

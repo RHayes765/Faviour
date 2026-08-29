@@ -9,7 +9,7 @@
 export function normalizeBarcode(raw: string): string | null {
   const digits = raw.replace(/\D/g, '');
   if (digits.length < 6 || digits.length > 14) {
-    return digits.length === 0 ? null : digits || null;
+    return null; // junk input — no real product code is this short/long
   }
   if (digits.length === 12) {
     return `0${digits}`;

@@ -21,14 +21,14 @@ import { useData } from '../context/DataContext';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
 import { colors } from '../theme';
 import type { Preference } from '../types';
-import { filterItems, sortByRecency } from '../utils/search';
+import { ALL_FILTER, filterItems, sortByRecency } from '../utils/search';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<TabParamList, 'Lookup'>,
   NativeStackScreenProps<RootStackParamList>
 >;
 
-const ALL = 'all';
+const ALL = ALL_FILTER;
 
 export function ItemsScreen({ route, navigation }: Props) {
   const { profiles, items, categories, brands } = useData();
@@ -48,6 +48,14 @@ export function ItemsScreen({ route, navigation }: Props) {
       navigation.setParams({ profileFilterId: undefined });
     }
   }, [route.params?.profileFilterId, navigation]);
+
+  // Drop a profile filter whose profile has been deleted — otherwise the list
+  // sticks on "Profile: Unknown" with no way to see anything.
+  useEffect(() => {
+    if (selectedProfile !== ALL && !profiles.some((p) => p.id === selectedProfile)) {
+      setSelectedProfile(ALL);
+    }
+  }, [profiles, selectedProfile]);
 
   const filteredItems = useMemo(
     () =>
@@ -241,6 +249,7 @@ export function ItemsScreen({ route, navigation }: Props) {
         <FlatList
           data={filteredItems}
           keyExtractor={(item) => item.id}
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => (
             <ItemCard

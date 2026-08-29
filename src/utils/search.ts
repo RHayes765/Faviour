@@ -3,37 +3,41 @@ import type { Item, Preference } from '../types';
 export interface ItemFilterCriteria {
   /** Free-text search across name, brand, category, and notes. */
   query?: string;
-  profileId?: string | 'all';
-  category?: string | 'all';
-  brand?: string | 'all';
-  preference?: Preference | 'all';
+  profileId?: string;
+  category?: string;
+  brand?: string;
+  preference?: Preference | string;
+}
+
+/** Sentinel for "no filter". Deliberately not a plausible user value — a brand
+ * literally named "all" must remain filterable. */
+export const ALL_FILTER = '__all__';
+
+function isActive(value: string | undefined): value is string {
+  return Boolean(value) && value !== ALL_FILTER;
 }
 
 export function filterItems(items: Item[], criteria: ItemFilterCriteria): Item[] {
   const query = (criteria.query ?? '').trim().toLowerCase();
   return items.filter((item) => {
+    if (isActive(criteria.profileId) && item.profileId !== criteria.profileId) {
+      return false;
+    }
+    // Category/brand match case-insensitively — the filter dropdowns dedupe
+    // options case-insensitively, so matching must agree with them.
     if (
-      criteria.profileId &&
-      criteria.profileId !== 'all' &&
-      item.profileId !== criteria.profileId
+      isActive(criteria.category) &&
+      item.category.toLowerCase() !== criteria.category.toLowerCase()
     ) {
       return false;
     }
     if (
-      criteria.category &&
-      criteria.category !== 'all' &&
-      item.category !== criteria.category
+      isActive(criteria.brand) &&
+      item.brand.toLowerCase() !== criteria.brand.toLowerCase()
     ) {
       return false;
     }
-    if (criteria.brand && criteria.brand !== 'all' && item.brand !== criteria.brand) {
-      return false;
-    }
-    if (
-      criteria.preference &&
-      criteria.preference !== 'all' &&
-      item.preference !== criteria.preference
-    ) {
+    if (isActive(criteria.preference) && item.preference !== criteria.preference) {
       return false;
     }
     if (query) {

@@ -29,12 +29,18 @@ export function ScanScreen({ route, navigation }: Props) {
   const [scannedCode, setScannedCode] = useState<string | null>(null);
   const [manualOpen, setManualOpen] = useState(false);
   const [manualValue, setManualValue] = useState('');
+  // The camera keeps firing onBarcodeScanned every frame; act only once.
+  const handledRef = React.useRef(false);
 
   const handleCode = (raw: string) => {
+    if (handledRef.current) {
+      return;
+    }
     const code = normalizeBarcode(raw);
     if (!code) {
       return;
     }
+    handledRef.current = true;
     if (Platform.OS !== 'web') {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
         () => undefined,
@@ -133,7 +139,10 @@ export function ScanScreen({ route, navigation }: Props) {
             )}
             <TouchableOpacity
               style={styles.secondaryButton}
-              onPress={() => setScannedCode(null)}
+              onPress={() => {
+                handledRef.current = false;
+                setScannedCode(null);
+              }}
             >
               <Text style={styles.secondaryButtonText}>Scan again</Text>
             </TouchableOpacity>

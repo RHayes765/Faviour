@@ -116,14 +116,20 @@ export function AddItemScreen({ route, navigation }: Props) {
     setSuggestion(null);
   };
 
+  const [creatingProfile, setCreatingProfile] = useState(false);
   const handleCreateProfile = async () => {
     const trimmed = newProfileName.trim();
-    if (!trimmed) {
+    if (!trimmed || creatingProfile) {
       return;
     }
-    const profile = await addProfile(trimmed);
-    setSelectedProfileId(profile.id);
-    setNewProfileName('');
+    setCreatingProfile(true);
+    try {
+      const profile = await addProfile(trimmed);
+      setSelectedProfileId(profile.id);
+      setNewProfileName('');
+    } finally {
+      setCreatingProfile(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -145,13 +151,13 @@ export function AddItemScreen({ route, navigation }: Props) {
     }
 
     setSaving(true);
+    let importedPhoto: string | null = null;
     try {
       let photoFileName = itemToEdit?.photoFileName ?? null;
       if (pickedPhotoUri) {
-        photoFileName = await importPhoto(pickedPhotoUri);
-        deletePhoto(itemToEdit?.photoFileName ?? null);
+        importedPhoto = await importPhoto(pickedPhotoUri);
+        photoFileName = importedPhoto;
       } else if (photoRemoved) {
-        deletePhoto(itemToEdit?.photoFileName ?? null);
         photoFileName = null;
       }
 
@@ -172,7 +178,16 @@ export function AddItemScreen({ route, navigation }: Props) {
       } else {
         await addItem(itemData);
       }
+      // Only after the record is persisted is it safe to drop a replaced or
+      // removed old photo file.
+      if ((importedPhoto || photoRemoved) && itemToEdit?.photoFileName) {
+        deletePhoto(itemToEdit.photoFileName);
+      }
       navigation.goBack();
+    } catch (e) {
+      console.error('Failed to save item', e);
+      deletePhoto(importedPhoto);
+      showAlert('Save failed', "The item couldn't be saved. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -211,7 +226,8 @@ export function AddItemScreen({ route, navigation }: Props) {
       title: 'Delete Item',
       message: 'Are you sure you want to delete this item?',
       onConfirm: () => {
-        void removeItem(itemToEdit.id).then(() => navigation.goBack());
+        // Pop past the detail screen too — it has nothing to show anymore.
+        void removeItem(itemToEdit.id).then(() => navigation.popTo('Main'));
       },
     });
   };
@@ -239,9 +255,12 @@ export function AddItemScreen({ route, navigation }: Props) {
               onSubmitEditing={handleCreateProfile}
             />
             <TouchableOpacity
-              style={[styles.inlineCreateButton, !newProfileName.trim() && styles.disabledButton]}
+              style={[
+                styles.inlineCreateButton,
+                (!newProfileName.trim() || creatingProfile) && styles.disabledButton,
+              ]}
               onPress={handleCreateProfile}
-              disabled={!newProfileName.trim()}
+              disabled={!newProfileName.trim() || creatingProfile}
             >
               <Text style={styles.inlineCreateButtonText}>Create</Text>
             </TouchableOpacity>

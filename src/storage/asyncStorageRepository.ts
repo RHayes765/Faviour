@@ -18,13 +18,17 @@ const KEYS = {
   tags: '@faviour:tags',
 } as const;
 
-function parseJson<T>(raw: string | null | undefined): T | undefined {
+function parseJson<T>(raw: string | null | undefined, key: string): T | undefined {
   if (raw == null) {
     return undefined;
   }
   try {
     return JSON.parse(raw) as T;
-  } catch {
+  } catch (e) {
+    // Never silently discard existing (corrupt) data — the next persist would
+    // overwrite it. Park the raw payload for manual recovery and continue.
+    console.warn(`Corrupt data under ${key}; backing up raw payload`, e);
+    void AsyncStorage.setItem(`${key}:corrupt-backup`, raw).catch(() => undefined);
     return undefined;
   }
 }
@@ -51,8 +55,25 @@ function dedupeTags(tags: string[]): string[] {
 export class AsyncStorageRepository implements FaviourRepository {
   // In-memory mirror hydrated by load(); every mutation updates it, then persists.
   private db: DbSnapshot | null = null;
+  // Single-flights loading: concurrent load()/mutation calls must never each
+  // hydrate their own mirror — a stale one would clobber committed writes on
+  // its next whole-collection persist.
+  private loadPromise: Promise<void> | null = null;
 
   async load(): Promise<DbSnapshot> {
+    if (!this.db) {
+      if (!this.loadPromise) {
+        this.loadPromise = this.hydrate().catch((e) => {
+          this.loadPromise = null; // allow a retry after a failed load
+          throw e;
+        });
+      }
+      await this.loadPromise;
+    }
+    return this.snapshot();
+  }
+
+  private async hydrate(): Promise<void> {
     const entries = await AsyncStorage.multiGet([
       KEYS.meta,
       KEYS.profiles,
@@ -63,20 +84,19 @@ export class AsyncStorageRepository implements FaviourRepository {
     for (const [key, value] of entries) {
       byKey[key] = value;
     }
-    const meta = parseJson<{ schemaVersion: number }>(byKey[KEYS.meta]);
+    const meta = parseJson<{ schemaVersion: number }>(byKey[KEYS.meta], KEYS.meta);
     const fromVersion = meta?.schemaVersion ?? 0;
     this.db = runMigrations(
       {
-        profiles: parseJson<Profile[]>(byKey[KEYS.profiles]),
-        items: parseJson<Item[]>(byKey[KEYS.items]),
-        reasonTags: parseJson<string[]>(byKey[KEYS.tags]),
+        profiles: parseJson<Profile[]>(byKey[KEYS.profiles], KEYS.profiles),
+        items: parseJson<Item[]>(byKey[KEYS.items], KEYS.items),
+        reasonTags: parseJson<string[]>(byKey[KEYS.tags], KEYS.tags),
       },
       fromVersion,
     );
     if (fromVersion !== CURRENT_SCHEMA_VERSION) {
       await this.persistAll();
     }
-    return this.snapshot();
   }
 
   async createProfile(input: NewProfileInput): Promise<Profile> {

@@ -1,5 +1,5 @@
 import type { Item } from '../src/types';
-import { distinctValues, filterItems, sortByRecency } from '../src/utils/search';
+import { ALL_FILTER, distinctValues, filterItems, sortByRecency } from '../src/utils/search';
 
 function makeItem(overrides: Partial<Item>): Item {
   return {
@@ -57,10 +57,33 @@ describe('filterItems', () => {
     expect(filterItems(items, { profileId: 'p2', preference: 'like' })).toHaveLength(0);
   });
 
-  it("treats 'all' as no filter", () => {
+  it('treats the ALL sentinel as no filter', () => {
     expect(
-      filterItems(items, { profileId: 'all', category: 'all', brand: 'all', preference: 'all' }),
+      filterItems(items, {
+        profileId: ALL_FILTER,
+        category: ALL_FILTER,
+        brand: ALL_FILTER,
+        preference: ALL_FILTER,
+      }),
     ).toHaveLength(3);
+  });
+
+  it('matches category and brand case-insensitively (dropdown options are deduped that way)', () => {
+    const mixed = [
+      makeItem({ id: 'p1', category: 'Pizza', brand: 'Frank Foods' }),
+      makeItem({ id: 'p2', category: 'pizza', brand: 'frank foods' }),
+    ];
+    expect(filterItems(mixed, { category: 'Pizza' })).toHaveLength(2);
+    expect(filterItems(mixed, { brand: 'Frank Foods' })).toHaveLength(2);
+  });
+
+  it('filters a brand literally named "all" (the laundry detergent) for real', () => {
+    const detergents = [
+      makeItem({ id: 'd1', brand: 'all' }),
+      makeItem({ id: 'd2', brand: 'Tide' }),
+    ];
+    expect(filterItems(detergents, { brand: ALL_FILTER })).toHaveLength(2);
+    expect(filterItems(detergents, { brand: 'all' }).map((i) => i.id)).toEqual(['d1']);
   });
 });
 

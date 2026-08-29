@@ -20,6 +20,12 @@ describe('normalizeBarcode', () => {
     expect(normalizeBarcode('')).toBeNull();
     expect(normalizeBarcode('no digits here')).toBeNull();
   });
+
+  it('rejects implausible lengths instead of passing junk through', () => {
+    expect(normalizeBarcode('123')).toBeNull();
+    expect(normalizeBarcode('12345')).toBeNull();
+    expect(normalizeBarcode('123456789012345')).toBeNull();
+  });
 });
 
 describe('barcodesMatch', () => {

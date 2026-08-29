@@ -32,17 +32,23 @@ export function ProfilesScreen({ navigation }: Props) {
   const { profiles, items, addProfile, removeProfile } = useData();
   const [newProfileName, setNewProfileName] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [creating, setCreating] = useState(false);
 
   const profileItems = (profileId: string) => items.filter((i) => i.profileId === profileId);
 
   const handleAddProfile = async () => {
     const trimmed = newProfileName.trim();
-    if (!trimmed) {
+    if (!trimmed || creating) {
       return;
     }
-    await addProfile(trimmed);
-    setNewProfileName('');
-    setShowAddModal(false);
+    setCreating(true);
+    try {
+      await addProfile(trimmed);
+      setNewProfileName('');
+      setShowAddModal(false);
+    } finally {
+      setCreating(false);
+    }
   };
 
   const handleDeleteProfile = (profile: Profile) => {
@@ -201,10 +207,10 @@ export function ProfilesScreen({ navigation }: Props) {
               <TouchableOpacity
                 style={[
                   styles.addProfileButton,
-                  !newProfileName.trim() && styles.disabledButton,
+                  (!newProfileName.trim() || creating) && styles.disabledButton,
                 ]}
                 onPress={handleAddProfile}
-                disabled={!newProfileName.trim()}
+                disabled={!newProfileName.trim() || creating}
               >
                 <Text style={styles.addProfileButtonText}>Add Profile</Text>
               </TouchableOpacity>

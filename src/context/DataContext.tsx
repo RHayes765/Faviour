@@ -17,6 +17,10 @@ import { distinctValues } from '../utils/search';
 interface DataContextValue {
   /** False until the initial load (and any pending migration) completes. */
   ready: boolean;
+  /** True when the initial load failed — the UI must not present an empty
+   * library over intact stored data. */
+  loadFailed: boolean;
+  retryLoad: () => void;
   profiles: Profile[];
   items: Item[];
   reasonTags: string[];
@@ -37,12 +41,15 @@ const DataContext = createContext<DataContextValue | null>(null);
 export function DataProvider({ children }: { children: React.ReactNode }) {
   const repoRef = useRef<FaviourRepository>(new AsyncStorageRepository());
   const [ready, setReady] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [reasonTags, setReasonTags] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
+    setLoadFailed(false);
     repoRef.current
       .load()
       .then((db) => {
@@ -57,13 +64,15 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       .catch((e) => {
         console.error('Failed to load data', e);
         if (!cancelled) {
-          setReady(true);
+          setLoadFailed(true);
         }
       });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadAttempt]);
+
+  const retryLoad = useCallback(() => setLoadAttempt((n) => n + 1), []);
 
   const addProfile = useCallback(async (name: string) => {
     const profile = await repoRef.current.createProfile({ name });
@@ -122,6 +131,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(
     () => ({
       ready,
+      loadFailed,
+      retryLoad,
       profiles,
       items,
       reasonTags,
@@ -136,6 +147,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }),
     [
       ready,
+      loadFailed,
+      retryLoad,
       profiles,
       items,
       reasonTags,
