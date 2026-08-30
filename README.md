@@ -21,13 +21,17 @@ Primarily built for food, but it works for any product.
 - **Photos** — snap the package so you recognize it on the shelf.
 - **Profiles** — per-person verdicts for the whole family.
 
-Everything is stored locally on the device (AsyncStorage behind a repository
-interface — see below). No account, no cloud, no tracking.
+Local-first: everything works offline with no account. Optionally sign in
+(email link or Google via Supabase) to back up your data, sync across
+devices, and **share your lists** — a single-use 8-character code connects
+two accounts, and the other person's profiles show up read-only in your
+search and barcode scans. See SETUP.md for the one-time cloud setup.
 
 ## Development
 
-Expo SDK 57 / React Native 0.86 / TypeScript. Everything runs in **Expo Go** —
-no dev build needed.
+Expo SDK 54 / React Native 0.81 / TypeScript — pinned to SDK 54 so the Play
+Store Expo Go client works as the dev loop. Everything runs in **Expo Go**;
+release APKs are built locally (below).
 
 ```
 npm install
