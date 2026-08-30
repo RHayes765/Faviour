@@ -156,6 +156,12 @@ export function AccountSection() {
         <View style={styles.dividerLine} />
       </View>
 
+      {codeSent ? (
+        <Text style={styles.mutedText}>
+          Check your email — tap the sign-in link on this phone, or type the
+          code below if your email shows one.
+        </Text>
+      ) : null}
       {!codeSent ? (
         <View style={styles.emailRow}>
           <TextInput
@@ -184,9 +190,6 @@ export function AccountSection() {
         </View>
       ) : (
         <View>
-          <Text style={styles.mutedText}>
-            Enter the 6-digit code sent to {email.trim()}
-          </Text>
           <View style={styles.emailRow}>
             <TextInput
               style={styles.input}
