@@ -16,7 +16,8 @@ import { VerdictBadge } from '../components/VerdictBadge';
 import { useData } from '../context/DataContext';
 import { useSync } from '../context/SyncContext';
 import type { RootStackParamList } from '../navigation/types';
-import { colors } from '../theme';
+import { useThemeColors, useThemedStyles } from '../context/ThemeContext';
+import type { ThemeColors } from '../theme';
 import { barcodesMatch, normalizeBarcode } from '../utils/barcode';
 import { rankInfo } from '../utils/ranking';
 
@@ -25,6 +26,8 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Scan'>;
 const BARCODE_TYPES = ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128'] as const;
 
 export function ScanScreen({ route, navigation }: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   const capture = route.params?.mode === 'capture';
   const { items, profiles } = useData();
   const { sharedItems, sharedProfiles, sharedLabelFor } = useSync();
@@ -202,7 +205,7 @@ export function ScanScreen({ route, navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
@@ -233,7 +236,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   permissionButtonText: {
-    color: 'white',
+    color: colors.onPrimary,
     fontWeight: '600',
   },
   reticle: {
@@ -304,7 +307,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   primaryButtonText: {
-    color: 'white',
+    color: colors.onPrimary,
     fontSize: 15,
     fontWeight: '600',
   },

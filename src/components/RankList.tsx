@@ -3,7 +3,8 @@ import React from 'react';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Sortable from 'react-native-sortables';
 
-import { colors } from '../theme';
+import { useThemeColors, useThemedStyles } from '../context/ThemeContext';
+import type { ThemeColors } from '../theme';
 import type { Item } from '../types';
 import { VerdictBadge } from './VerdictBadge';
 
@@ -23,6 +24,8 @@ interface Props {
 const DRAG_ENABLED = Platform.OS !== 'web';
 
 export function RankList({ items, onReorder, onRemove }: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   const move = (index: number, delta: number) => {
     const target = index + delta;
     if (target < 0 || target >= items.length) {
@@ -98,7 +101,7 @@ export function RankList({ items, onReorder, onRemove }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   list: {
     gap: 8,
   },

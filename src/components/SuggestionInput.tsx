@@ -8,7 +8,8 @@ import {
   View,
 } from 'react-native';
 
-import { colors } from '../theme';
+import { useThemedStyles, useThemeColors } from '../context/ThemeContext';
+import type { ThemeColors } from '../theme';
 
 interface Props {
   value: string;
@@ -30,6 +31,8 @@ export function SuggestionInput({
   suggestions,
   maxSuggestions = 6,
 }: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   const trimmed = value.trim().toLowerCase();
   const matches = suggestions
     .filter((s) => s.toLowerCase().includes(trimmed))
@@ -67,7 +70,7 @@ export function SuggestionInput({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: colors.border,

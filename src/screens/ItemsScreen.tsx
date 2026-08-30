@@ -20,7 +20,8 @@ import { ItemCard } from '../components/ItemCard';
 import { useData } from '../context/DataContext';
 import { useSync } from '../context/SyncContext';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
-import { colors } from '../theme';
+import { useThemedStyles, useThemeColors } from '../context/ThemeContext';
+import type { ThemeColors } from '../theme';
 import type { Preference } from '../types';
 import { rankInfo } from '../utils/ranking';
 import { ALL_FILTER, filterItems, sortByRecency } from '../utils/search';
@@ -33,6 +34,8 @@ type Props = CompositeScreenProps<
 const ALL = ALL_FILTER;
 
 export function ItemsScreen({ route, navigation }: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   const { profiles, items, categories, brands } = useData();
   const { sharedItems, sharedProfiles, sharedLabelFor } = useSync();
   const sharedItemIds = useMemo(
@@ -262,6 +265,7 @@ export function ItemsScreen({ route, navigation }: Props) {
         items.length === 0 ? (
           <EmptyState
             icon="fast-food-outline"
+            image={require('../../assets/splash-icon.png')}
             title="Nothing tracked yet"
             subtitle="Add the first product you want to remember"
             buttonLabel="Add an item"
@@ -311,13 +315,15 @@ export function ItemsScreen({ route, navigation }: Props) {
         onPress={() => navigation.navigate('AddItem', {})}
         accessibilityLabel="Add item"
       >
-        <Ionicons name="add" size={32} color="white" />
+        <Ionicons name="add" size={32} color={colors.onPrimary} />
       </TouchableOpacity>
     </SafeAreaView>
   );
 }
 
 function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   return (
     <View style={styles.filterChip}>
       <Text style={styles.filterChipText}>{label}</Text>
@@ -328,7 +334,7 @@ function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
@@ -374,7 +380,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   filterBadgeText: {
-    color: 'white',
+    color: colors.onPrimary,
     fontSize: 11,
     fontWeight: 'bold',
   },

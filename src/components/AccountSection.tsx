@@ -11,7 +11,8 @@ import {
 
 import { useAuth } from '../context/AuthContext';
 import { useSync } from '../context/SyncContext';
-import { colors } from '../theme';
+import { useThemeColors, useThemedStyles } from '../context/ThemeContext';
+import type { ThemeColors } from '../theme';
 import { confirmDestructive, showAlert } from '../utils/confirm';
 
 // Provider-generic sign-in list: adding Meta/X later is one entry here plus
@@ -23,6 +24,8 @@ const OAUTH_PROVIDERS: {
 }[] = [{ id: 'google', label: 'Continue with Google', icon: 'logo-google' }];
 
 export function AccountSection() {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   const auth = useAuth();
   const sync = useSync();
   const [email, setEmail] = useState('');
@@ -84,7 +87,7 @@ export function AccountSection() {
             void sync.syncNow();
           }}
         >
-          <Ionicons name="sync-outline" size={16} color="white" />
+          <Ionicons name="sync-outline" size={16} color={colors.onPrimary} />
           <Text style={styles.syncButtonText}>
             {sync.syncing ? 'Syncing…' : 'Sync now'}
           </Text>
@@ -231,7 +234,7 @@ export function AccountSection() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   card: {
     backgroundColor: colors.card,
     borderRadius: 10,
@@ -309,7 +312,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sendButtonText: {
-    color: 'white',
+    color: colors.onPrimary,
     fontWeight: '600',
     fontSize: 14,
   },
@@ -328,7 +331,7 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
   },
   syncButtonText: {
-    color: 'white',
+    color: colors.onPrimary,
     fontWeight: '600',
     fontSize: 14,
   },

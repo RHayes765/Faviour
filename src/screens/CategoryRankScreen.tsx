@@ -9,12 +9,15 @@ import { RankList } from '../components/RankList';
 import { VerdictBadge } from '../components/VerdictBadge';
 import { useData } from '../context/DataContext';
 import type { RootStackParamList } from '../navigation/types';
-import { colors } from '../theme';
+import { useThemedStyles, useThemeColors } from '../context/ThemeContext';
+import type { ThemeColors } from '../theme';
 import { categoryRanking } from '../utils/ranking';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CategoryRank'>;
 
 export function CategoryRankScreen({ route, navigation }: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   const { category } = route.params;
   const { profiles, items, setCategoryRanks } = useData();
   const [profileId, setProfileId] = useState<string | null>(
@@ -90,7 +93,7 @@ export function CategoryRankScreen({ route, navigation }: Props) {
                   void setCategoryRanks(profileId, category, [...rankedIds, item.id]);
                 }}
               >
-                <Ionicons name="add" size={16} color="white" />
+                <Ionicons name="add" size={16} color={colors.onPrimary} />
                 <Text style={styles.addButtonText}>Rank it</Text>
               </TouchableOpacity>
             </View>
@@ -109,7 +112,7 @@ export function CategoryRankScreen({ route, navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -164,7 +167,7 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   addButtonText: {
-    color: 'white',
+    color: colors.onPrimary,
     fontSize: 13,
     fontWeight: '600',
   },

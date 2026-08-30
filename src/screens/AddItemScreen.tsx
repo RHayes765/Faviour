@@ -18,7 +18,8 @@ import { SuggestionInput } from '../components/SuggestionInput';
 import { TagPicker } from '../components/TagPicker';
 import { useData } from '../context/DataContext';
 import type { RootStackParamList } from '../navigation/types';
-import { colors } from '../theme';
+import { useThemeColors, useThemedStyles } from '../context/ThemeContext';
+import type { ThemeColors } from '../theme';
 import type { Preference } from '../types';
 import { normalizeBarcode } from '../utils/barcode';
 import { confirmDestructive, showAlert } from '../utils/confirm';
@@ -27,6 +28,8 @@ import { deletePhoto, importPhoto, photoUri } from '../utils/photos';
 type Props = NativeStackScreenProps<RootStackParamList, 'AddItem'>;
 
 export function AddItemScreen({ route, navigation }: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   const {
     profiles,
     items,
@@ -308,7 +311,7 @@ export function AddItemScreen({ route, navigation }: Props) {
           <Ionicons
             name="thumbs-up"
             size={20}
-            color={preference === 'like' ? 'white' : colors.like}
+            color={preference === 'like' ? colors.onPrimary : colors.like}
           />
           <Text
             style={[styles.verdictText, preference === 'like' && styles.verdictTextSelected]}
@@ -323,7 +326,7 @@ export function AddItemScreen({ route, navigation }: Props) {
           <Ionicons
             name="thumbs-down"
             size={20}
-            color={preference === 'dislike' ? 'white' : colors.dislike}
+            color={preference === 'dislike' ? colors.onPrimary : colors.dislike}
           />
           <Text
             style={[styles.verdictText, preference === 'dislike' && styles.verdictTextSelected]}
@@ -465,7 +468,7 @@ export function AddItemScreen({ route, navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -527,7 +530,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   inlineCreateButtonText: {
-    color: 'white',
+    color: colors.onPrimary,
     fontWeight: '600',
   },
   verdictRow: {
@@ -615,7 +618,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#EAF3FF',
+    backgroundColor: colors.accentSoft,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -633,7 +636,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   suggestionUseText: {
-    color: 'white',
+    color: colors.onPrimary,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -663,7 +666,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   verdictTextSelected: {
-    color: 'white',
+    color: colors.onPrimary,
   },
   submitButton: {
     backgroundColor: colors.primary,
@@ -673,7 +676,7 @@ const styles = StyleSheet.create({
     marginTop: 28,
   },
   submitButtonText: {
-    color: 'white',
+    color: colors.onPrimary,
     fontSize: 16,
     fontWeight: '600',
   },

@@ -1,7 +1,8 @@
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { colors } from '../theme';
+import { useThemedStyles, useThemeColors } from '../context/ThemeContext';
+import type { ThemeColors } from '../theme';
 import type { Item } from '../types';
 import { formatTriedDate } from '../utils/dates';
 import { photoUri } from '../utils/photos';
@@ -18,6 +19,8 @@ interface Props {
 }
 
 export function ItemCard({ item, profileName, onPress, rankBadge, shared }: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   const liked = item.preference === 'like';
   const photo = photoUri(item.photoFileName);
   return (
@@ -74,7 +77,7 @@ export function ItemCard({ item, profileName, onPress, rankBadge, shared }: Prop
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   card: {
     backgroundColor: colors.card,
     borderRadius: 8,
@@ -99,13 +102,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   rankPill: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.rankPillBg,
     borderRadius: 12,
     paddingHorizontal: 9,
     paddingVertical: 4,
   },
   rankPillText: {
-    color: 'white',
+    color: colors.rankPillText,
     fontSize: 12,
     fontWeight: '700',
   },

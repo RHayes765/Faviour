@@ -19,7 +19,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { EmptyState } from '../components/EmptyState';
 import { useData } from '../context/DataContext';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
-import { colors, profileColor } from '../theme';
+import { useThemedStyles, useThemeColors } from '../context/ThemeContext';
+import { profileColor } from '../theme';
+import type { ThemeColors } from '../theme';
 import type { Profile } from '../types';
 import { confirmDestructive } from '../utils/confirm';
 
@@ -29,6 +31,8 @@ type Props = CompositeScreenProps<
 >;
 
 export function ProfilesScreen({ navigation }: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   const { profiles, items, addProfile, removeProfile } = useData();
   const [newProfileName, setNewProfileName] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -231,13 +235,13 @@ export function ProfilesScreen({ navigation }: Props) {
         onPress={() => setShowAddModal(true)}
         accessibilityLabel="Add profile"
       >
-        <Ionicons name="add" size={32} color="white" />
+        <Ionicons name="add" size={32} color={colors.onPrimary} />
       </TouchableOpacity>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
@@ -279,7 +283,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatarText: {
-    color: 'white',
+    color: '#FFFFFF',
     fontSize: 20,
     fontWeight: 'bold',
   },
@@ -413,7 +417,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   addProfileButtonText: {
-    color: 'white',
+    color: colors.onPrimary,
     fontSize: 16,
     fontWeight: '500',
   },

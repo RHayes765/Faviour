@@ -1,17 +1,69 @@
-export const colors = {
-  primary: '#007AFF',
-  like: '#34C759',
-  dislike: '#FF3B30',
-  background: '#f8f8f8',
-  card: '#ffffff',
-  border: '#dddddd',
-  chipBackground: '#f0f0f0',
-  text: '#111111',
-  textSecondary: '#333333',
-  textMuted: '#666666',
-  textFaint: '#999999',
-  disabled: '#cccccc',
-} as const;
+// Brand palette derived from the Faviour logo (sampled): deep emerald green,
+// pure red, near-black ink on white. Green doubles as the app's primary and
+// the "like" color; the rank pill uses ink, echoing the logo's ring.
+
+export interface ThemeColors {
+  primary: string;
+  onPrimary: string;
+  like: string;
+  dislike: string;
+  likeSoft: string;
+  dislikeSoft: string;
+  accentSoft: string;
+  background: string;
+  card: string;
+  border: string;
+  chipBackground: string;
+  text: string;
+  textSecondary: string;
+  textMuted: string;
+  textFaint: string;
+  disabled: string;
+  rankPillBg: string;
+  rankPillText: string;
+}
+
+export const lightColors: ThemeColors = {
+  primary: '#107C4B',
+  onPrimary: '#FFFFFF',
+  like: '#107C4B',
+  dislike: '#E11B22',
+  likeSoft: '#E7F3EC',
+  dislikeSoft: '#FBE9E9',
+  accentSoft: '#E7F3EC',
+  background: '#F7F8F7',
+  card: '#FFFFFF',
+  border: '#E2E4E3',
+  chipBackground: '#EEF1EF',
+  text: '#1E1E1E',
+  textSecondary: '#3A3D3B',
+  textMuted: '#6B706D',
+  textFaint: '#9AA09C',
+  disabled: '#C9CECB',
+  rankPillBg: '#1E1E1E',
+  rankPillText: '#FFFFFF',
+};
+
+export const darkColors: ThemeColors = {
+  primary: '#2FA36B',
+  onPrimary: '#FFFFFF',
+  like: '#2FA36B',
+  dislike: '#EF453F',
+  likeSoft: '#15341F',
+  dislikeSoft: '#3A1B1B',
+  accentSoft: '#15341F',
+  background: '#101312',
+  card: '#1A1E1C',
+  border: '#2E3431',
+  chipBackground: '#252A27',
+  text: '#ECEFED',
+  textSecondary: '#C6CCC8',
+  textMuted: '#8F9692',
+  textFaint: '#666D69',
+  disabled: '#3A403D',
+  rankPillBg: '#ECEFED',
+  rankPillText: '#101312',
+};
 
 export const avatarColors = [
   '#4285F4', '#EA4335', '#FBBC05', '#34A853',

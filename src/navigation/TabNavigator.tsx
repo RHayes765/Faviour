@@ -2,15 +2,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
 
+import { useThemeColors } from '../context/ThemeContext';
 import { InsightsScreen } from '../screens/InsightsScreen';
 import { ItemsScreen } from '../screens/ItemsScreen';
 import { ProfilesScreen } from '../screens/ProfilesScreen';
-import { colors } from '../theme';
 import type { TabParamList } from './types';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
 export function TabNavigator() {
+  const colors = useThemeColors();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({

@@ -1,21 +1,37 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  type ImageSourcePropType,
+} from 'react-native';
 
-import { colors } from '../theme';
+import { useThemeColors, useThemedStyles } from '../context/ThemeContext';
+import type { ThemeColors } from '../theme';
 
 interface Props {
   icon: keyof typeof Ionicons.glyphMap;
+  /** When set, renders this image instead of the icon (e.g. the app logo). */
+  image?: ImageSourcePropType;
   title: string;
   subtitle?: string;
   buttonLabel?: string;
   onButtonPress?: () => void;
 }
 
-export function EmptyState({ icon, title, subtitle, buttonLabel, onButtonPress }: Props) {
+export function EmptyState({ icon, image, title, subtitle, buttonLabel, onButtonPress }: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   return (
     <View style={styles.container}>
-      <Ionicons name={icon} size={56} color={colors.disabled} />
+      {image ? (
+        <Image source={image} style={styles.image} />
+      ) : (
+        <Ionicons name={icon} size={56} color={colors.disabled} />
+      )}
       <Text style={styles.title}>{title}</Text>
       {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
       {buttonLabel && onButtonPress ? (
@@ -27,12 +43,17 @@ export function EmptyState({ icon, title, subtitle, buttonLabel, onButtonPress }
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingBottom: 100,
+  },
+  image: {
+    width: 96,
+    height: 96,
+    opacity: 0.9,
   },
   title: {
     fontSize: 18,
@@ -56,7 +77,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   buttonText: {
-    color: 'white',
+    color: colors.onPrimary,
     fontWeight: '500',
   },
 });

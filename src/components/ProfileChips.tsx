@@ -1,7 +1,9 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 
-import { colors, profileColor } from '../theme';
+import { useThemedStyles } from '../context/ThemeContext';
+import { profileColor } from '../theme';
+import type { ThemeColors } from '../theme';
 import type { Profile } from '../types';
 
 interface Props {
@@ -11,6 +13,7 @@ interface Props {
 }
 
 export function ProfileChips({ profiles, selectedId, onSelect }: Props) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <ScrollView
       horizontal
@@ -38,7 +41,7 @@ export function ProfileChips({ profiles, selectedId, onSelect }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: 8,
@@ -55,7 +58,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   chipTextSelected: {
-    color: 'white',
+    color: '#FFFFFF',
     fontWeight: '600',
   },
 });

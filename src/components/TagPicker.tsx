@@ -8,7 +8,8 @@ import {
   View,
 } from 'react-native';
 
-import { colors } from '../theme';
+import { useThemeColors, useThemedStyles } from '../context/ThemeContext';
+import type { ThemeColors } from '../theme';
 
 interface Props {
   availableTags: string[];
@@ -19,6 +20,8 @@ interface Props {
 }
 
 export function TagPicker({ availableTags, selectedTags, onToggleTag, onCreateTag }: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   const [creating, setCreating] = useState(false);
   const [newTag, setNewTag] = useState('');
 
@@ -99,7 +102,7 @@ export function TagPicker({ availableTags, selectedTags, onToggleTag, onCreateTa
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   wrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -121,7 +124,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   chipTextSelected: {
-    color: 'white',
+    color: colors.onPrimary,
     fontWeight: '600',
   },
   newChip: {
@@ -161,7 +164,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   createButtonText: {
-    color: 'white',
+    color: colors.onPrimary,
     fontWeight: '600',
     fontSize: 14,
   },

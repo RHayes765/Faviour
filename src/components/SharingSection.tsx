@@ -12,7 +12,8 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useSync } from '../context/SyncContext';
 import { getSupabase } from '../sync/supabaseClient';
-import { colors } from '../theme';
+import { useThemeColors, useThemedStyles } from '../context/ThemeContext';
+import type { ThemeColors } from '../theme';
 import { confirmDestructive, showAlert } from '../utils/confirm';
 
 interface GrantedShare {
@@ -30,6 +31,8 @@ interface ReceivedShare {
 }
 
 export function SharingSection() {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   const { session } = useAuth();
   const sync = useSync();
   const [granted, setGranted] = useState<GrantedShare[]>([]);
@@ -189,7 +192,7 @@ export function SharingSection() {
         disabled={busy}
         onPress={handleCreateCode}
       >
-        <Ionicons name="person-add-outline" size={16} color="white" />
+        <Ionicons name="person-add-outline" size={16} color={colors.onPrimary} />
         <Text style={styles.primaryButtonText}>Share my list</Text>
       </TouchableOpacity>
       {freshCode ? (
@@ -274,7 +277,7 @@ export function SharingSection() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   sectionLabel: {
     fontSize: 13,
     fontWeight: '600',
@@ -302,7 +305,7 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
   },
   primaryButtonText: {
-    color: 'white',
+    color: colors.onPrimary,
     fontWeight: '600',
     fontSize: 14,
   },
@@ -313,7 +316,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.primary,
-    backgroundColor: '#EAF3FF',
+    backgroundColor: colors.accentSoft,
   },
   codeText: {
     fontSize: 26,
@@ -351,7 +354,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   claimButtonText: {
-    color: 'white',
+    color: colors.onPrimary,
     fontWeight: '600',
     fontSize: 14,
   },

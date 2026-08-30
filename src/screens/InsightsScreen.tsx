@@ -10,7 +10,8 @@ import { ProfileChips } from '../components/ProfileChips';
 import { VerdictBadge } from '../components/VerdictBadge';
 import { useData } from '../context/DataContext';
 import type { RootStackParamList, TabParamList } from '../navigation/types';
-import { colors } from '../theme';
+import { useThemedStyles } from '../context/ThemeContext';
+import type { ThemeColors } from '../theme';
 import { formatTriedDate } from '../utils/dates';
 import { sortByRecency } from '../utils/search';
 import {
@@ -28,6 +29,7 @@ type Props = CompositeScreenProps<
 const EVERYONE = '__everyone__';
 
 export function InsightsScreen({ navigation }: Props) {
+  const styles = useThemedStyles(makeStyles);
   const { profiles, items } = useData();
   const [selectedId, setSelectedId] = useState<string>(EVERYONE);
 
@@ -175,7 +177,7 @@ export function InsightsScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -250,10 +252,10 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   tagLike: {
-    backgroundColor: '#E7F8EC',
+    backgroundColor: colors.likeSoft,
   },
   tagDislike: {
-    backgroundColor: '#FDEBEA',
+    backgroundColor: colors.dislikeSoft,
   },
   tagText: {
     fontSize: 12,

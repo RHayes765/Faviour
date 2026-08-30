@@ -15,7 +15,9 @@ import { VerdictBadge } from '../components/VerdictBadge';
 import { useData } from '../context/DataContext';
 import { useSync } from '../context/SyncContext';
 import type { RootStackParamList } from '../navigation/types';
-import { colors, profileColor } from '../theme';
+import { useThemeColors, useThemedStyles } from '../context/ThemeContext';
+import { profileColor } from '../theme';
+import type { ThemeColors } from '../theme';
 import { formatTriedDate } from '../utils/dates';
 import { confirmDestructive } from '../utils/confirm';
 import { photoUri } from '../utils/photos';
@@ -26,6 +28,8 @@ import { rankInfo } from '../utils/ranking';
 type Props = NativeStackScreenProps<RootStackParamList, 'ItemDetail'>;
 
 export function ItemDetailScreen({ route, navigation }: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   const { items, profiles, removeItem } = useData();
   const { sharedItems, sharedProfiles, sharedLabelFor } = useSync();
   const ownItem = items.find((i) => i.id === route.params.itemId);
@@ -174,7 +178,7 @@ export function ItemDetailScreen({ route, navigation }: Props) {
             style={styles.editButton}
             onPress={() => navigation.navigate('AddItem', { itemId: item.id })}
           >
-            <Ionicons name="pencil" size={18} color="white" />
+            <Ionicons name="pencil" size={18} color={colors.onPrimary} />
             <Text style={styles.editButtonText}>Edit</Text>
           </TouchableOpacity>
 
@@ -191,7 +195,7 @@ export function ItemDetailScreen({ route, navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -242,7 +246,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatarText: {
-    color: 'white',
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: 'bold',
   },
@@ -330,7 +334,7 @@ const styles = StyleSheet.create({
     marginTop: 32,
   },
   editButtonText: {
-    color: 'white',
+    color: colors.onPrimary,
     fontSize: 16,
     fontWeight: '600',
   },

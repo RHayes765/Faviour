@@ -14,11 +14,13 @@ import {
 } from 'react-native';
 
 import { AccountSection } from '../components/AccountSection';
+import { AppearanceSection } from '../components/AppearanceSection';
 import { SharingSection } from '../components/SharingSection';
 import { useData } from '../context/DataContext';
+import { useThemeColors, useThemedStyles } from '../context/ThemeContext';
 import type { RootStackParamList } from '../navigation/types';
 import { validateBackup, type BackupSummary } from '../storage/backup';
-import { colors } from '../theme';
+import type { ThemeColors } from '../theme';
 import type { DbSnapshot } from '../types';
 import { confirmDestructive, showAlert } from '../utils/confirm';
 import { pruneMissingPhotos } from '../utils/photos';
@@ -31,6 +33,8 @@ interface PendingImport {
 }
 
 export function SettingsScreen(_props: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useThemeColors();
   const { profiles, items, exportData, importData } = useData();
   const [busy, setBusy] = useState(false);
   const [pending, setPending] = useState<PendingImport | null>(null);
@@ -141,6 +145,9 @@ export function SettingsScreen(_props: Props) {
 
       <SharingSection />
 
+      <Text style={styles.sectionLabel}>Appearance</Text>
+      <AppearanceSection />
+
       <Text style={styles.sectionLabel}>Your data</Text>
       <View style={styles.card}>
         <Text style={styles.dataLine}>
@@ -234,7 +241,7 @@ export function SettingsScreen(_props: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -308,7 +315,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   primaryButtonText: {
-    color: 'white',
+    color: colors.onPrimary,
     fontWeight: '600',
     fontSize: 15,
   },
