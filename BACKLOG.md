@@ -2,20 +2,13 @@
 
 Ideas and known rough edges, in no particular order. Not commitments.
 
-## BUG — dark mode: typed text is black in several inputs
-Regression from the v1.3.0 theme conversion. RN TextInput defaults to black
-text unless the style sets `color` explicitly; inputs whose styles never had
-a `color` property stayed black on dark backgrounds (typed text near-invisible;
-autofill/placeholder render fine since those are styled separately). Fix:
-add `color: colors.text` to the TextInput style in each of:
-- SharingSection (share-code input)
-- ItemsScreen (searchInput)
-- SuggestionInput
-- TagPicker
-- ProfilesScreen (profile-name modal input)
-- ScanScreen (manual barcode entry)
-AddItemScreen and AccountSection already have it — use them as the pattern.
-Also worth a repo-wide `grep -A8 'TextInput'` audit for any stragglers.
+## ~~BUG — dark mode: typed text is black in some inputs~~ FIXED in v1.3.1
+RN TextInput defaults to black text unless the style sets `color`. The one
+affected component was SuggestionInput (used for the brand and category
+fields on Add Item — which is why scanned prefills looked right while typed
+text went black). Every other TextInput already set `color: colors.text`.
+Lesson kept for future inputs: always set `color` explicitly on TextInput
+styles.
 
 ## Scanner: disclose the data source's limits
 The barcode lookup uses Open Food Facts, a crowdsourced open database.

@@ -2,7 +2,7 @@
   "expo": {
     "name": "Faviour",
     "slug": "faviour",
-    "version": "1.3.0",
+    "version": "1.3.1",
     "scheme": "faviour",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -28,7 +28,7 @@
     },
     "android": {
       "package": "com.faviour",
-      "versionCode": 5,
+      "versionCode": 6,
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/android-icon-foreground.png",

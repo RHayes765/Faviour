@@ -77,6 +77,7 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
+    color: colors.text,
     backgroundColor: colors.card,
   },
   suggestionRow: {
